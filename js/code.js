@@ -26,12 +26,12 @@ function requestUserSubscriptionsList() {
     var request = gapi.client.youtube.subscriptions.list({
         part: 'snippet',
         mine: true,
-        maxResults: 30
+        maxResults: 50
     })
 
     request.execute(function(response) {
         var subscriptionListItems = response.items
-        populateChannelDropdown(subscriptionListItems)
+        //populateChannelDropdown(subscriptionListItems)
         populateQuickSearch(subscriptionListItems)
     })
 }
@@ -177,6 +177,8 @@ function formatDurationTime(duration) {
     }
     if (match[1] != undefined) {
         textDuration += match[1] + ':'
+    } else {
+        textDuration += '0:'
     }
     textDuration += match[2]
 
@@ -209,21 +211,43 @@ function populateChannelDropdown(subscriptionListItems) {
         requestUserUploadsPlaylistId(channelId)
         scrollInterval = setInterval(infiniteScroll, 500)
     })
-
-    $(document).on('scroll', infiniteScroll)
 }
 
 function populateQuickSearch(subscriptionListItems) {
 
-    var channelNameList = []
+    var channelDatums = []
 
     jQuery.each(subscriptionListItems, function(index, item) {
-        channelNameList.push(item.snippet.title)
+        channelDatums.push({
+            value: item.snippet.title,
+            channelId: item.snippet.resourceId.channelId
+        })
     })
 
     $('.typeahead').typeahead({
         name: 'channels',
-        local: channelNameList
+        local: channelDatums,
+        template: '<p id={{channelId}}>{{value}}</p>',
+        engine: Hogan
+    })
+
+    $(document).on('typeahead:selected', function(event, datum) {
+
+        window.clearInterval(scrollInterval)
+
+        $('#videoContainer').empty()
+        channelId = datum.channelId
+
+        var channelName = datum.value
+        var button = $('#channelSelector button')
+        button.empty()
+        button.append(channelName + ' ')
+        button.append($('<span class="caret"></span>'))
+        $('.typeahead').typeahead('setQuery', '')
+
+        requestUserUploadsPlaylistId(channelId)
+        scrollInterval = setInterval(infiniteScroll, 500)
+
     })
 
 }

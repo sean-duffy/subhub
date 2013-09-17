@@ -53,3 +53,7 @@ a {
 .tt-hint {
     display: none;
 }
+
+.typeahead, .twitter-typeahead .tt-hint, .tt-dropdown-menu {
+    width: 300px;
+}
