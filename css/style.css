@@ -41,6 +41,15 @@ a {
 
 .loading {
     text-align: center;
-    padding-top: 50px;
-    padding-bottom: 100px;
+    padding: 70px 0 70px 0;
+}
+
+#quickSearch {
+    display: inline-block;
+    margin-left: 15px;
+    vertical-align: center;
+}
+
+.tt-hint {
+    display: none;
 }

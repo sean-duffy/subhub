@@ -26,12 +26,13 @@ function requestUserSubscriptionsList() {
     var request = gapi.client.youtube.subscriptions.list({
         part: 'snippet',
         mine: true,
-        maxResults: 9
+        maxResults: 30
     })
 
     request.execute(function(response) {
         var subscriptionListItems = response.items
         populateChannelDropdown(subscriptionListItems)
+        populateQuickSearch(subscriptionListItems)
     })
 }
 
@@ -210,6 +211,21 @@ function populateChannelDropdown(subscriptionListItems) {
     })
 
     $(document).on('scroll', infiniteScroll)
+}
+
+function populateQuickSearch(subscriptionListItems) {
+
+    var channelNameList = []
+
+    jQuery.each(subscriptionListItems, function(index, item) {
+        channelNameList.push(item.snippet.title)
+    })
+
+    $('.typeahead').typeahead({
+        name: 'channels',
+        local: channelNameList
+    })
+
 }
 
 function nextPage() {
