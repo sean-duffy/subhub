@@ -90,7 +90,7 @@ function requestVideoContentDetails(videoIdList) {
 
             itemRow.push(item)
 
-            if (index % 4 == 3) {
+            if (index % 4 == 3 || item == videoItems[videoItems.length - 1]) {
                 createThumbnailRow(itemRow)
                 itemRow = []
             }
