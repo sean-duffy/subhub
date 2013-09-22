@@ -57,3 +57,7 @@ a {
 .typeahead, .twitter-typeahead .tt-hint, .tt-dropdown-menu {
     width: 300px;
 }
+
+#controlRow {
+    margin: 10px 0 0 0;
+}
