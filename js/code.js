@@ -1,7 +1,6 @@
 // Some variables to remember state.
-var channelId, playlistId, nextPageToken, currentToken, scrollInterval
+var channelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
 
-// Once the api loads call a function to get the uploads playlist id.
 function handleAPILoaded() {
     channelId = 'UCD4INvKvy83OXwAkRjaQKtw'
     requestUserUploadsPlaylistId(channelId)
@@ -22,18 +21,33 @@ function requestUserUploadsPlaylistId(channelId) {
     })
 }
 
-function requestUserSubscriptionsList() {
-    var request = gapi.client.youtube.subscriptions.list({
+function requestUserSubscriptionsList(pageToken) {
+    var requestOptions = {
         part: 'snippet',
         mine: true,
-        maxResults: 50
+        maxResults: 50,
+    }
+
+    if (pageToken) {
+        requestOptions.pageToken = pageToken
+    } else {
+        subscriptionListItems = []
+    }
+
+    var request = gapi.client.youtube.subscriptions.list(requestOptions)
+    request.execute(function(response) {
+        subscriptionListItems = subscriptionListItems.concat(response.items)
+        subscriptionPageToken = response.nextPageToken
+
+        if (subscriptionPageToken) {
+            console.log('got')
+            requestUserSubscriptionsList(subscriptionPageToken)
+        } else {
+            console.log('test')
+            populateQuickSearch(subscriptionListItems)
+        }
     })
 
-    request.execute(function(response) {
-        var subscriptionListItems = response.items
-        //populateChannelDropdown(subscriptionListItems)
-        populateQuickSearch(subscriptionListItems)
-    })
 }
 
 // Retrieve a playist of videos.
@@ -188,29 +202,6 @@ function formatDurationTime(duration) {
 
 function populateChannelDropdown(subscriptionListItems) {
 
-    var channelList = $('#channelList').detach()
-
-    jQuery.each(subscriptionListItems, function(index, item) {
-        var link = $('<a>')
-        link.text(item.snippet.title)
-        link.attr('id', item.snippet.resourceId.channelId)
-        channelList.append($('<li>').html(link))
-    })
-
-    $('#channelSelector').append(channelList)
-
-    $('#channelList a').on('click', function(event) {
-        window.clearInterval(scrollInterval)
-        $('#videoContainer').empty()
-        channelId = $(this).attr('id')
-        var channelName = $(this).text()
-        var button = $('#channelSelector button')
-        button.empty()
-        button.append(channelName + ' ')
-        button.append($('<span class="caret"></span>'))
-        requestUserUploadsPlaylistId(channelId)
-        scrollInterval = setInterval(infiniteScroll, 500)
-    })
 }
 
 function populateQuickSearch(subscriptionListItems) {
