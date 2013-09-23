@@ -2,8 +2,6 @@
 var channelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
 
 function handleAPILoaded() {
-    channelId = 'UCD4INvKvy83OXwAkRjaQKtw'
-    requestUserUploadsPlaylistId(channelId)
     requestUserSubscriptionsList()
     scrollInterval = setInterval(infiniteScroll, 500)
 }
@@ -40,10 +38,8 @@ function requestUserSubscriptionsList(pageToken) {
         subscriptionPageToken = response.nextPageToken
 
         if (subscriptionPageToken) {
-            console.log('got')
             requestUserSubscriptionsList(subscriptionPageToken)
         } else {
-            console.log('test')
             populateQuickSearch(subscriptionListItems)
         }
     })
