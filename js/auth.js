@@ -21,13 +21,13 @@ function checkAuth() {
   gapi.auth.authorize({
     client_id: OAUTH2_CLIENT_ID,
     scope: OAUTH2_SCOPES,
-    immediate: true
+    immediate: false
   }, handleAuthResult);
 }
 
 // Handles the result of a gapi.auth.authorize() call.
 function handleAuthResult(authResult) {
-  if (authResult) {
+  if (authResult.status.signed_in) {
     // Auth was successful; hide the things related to prompting for auth and show the things
     // that should be visible after auth succeeds.
     $('.pre-auth').hide();
