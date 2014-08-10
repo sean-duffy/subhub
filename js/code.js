@@ -1,22 +1,10 @@
 // Some variables to remember state.
-var channelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
+var currentChannelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
+var topTenList
 
 function handleAPILoaded() {
     requestUserSubscriptionsList()
     scrollInterval = setInterval(infiniteScroll, 500)
-}
-
-//Retrieve the uploads playlist id.
-function requestUserUploadsPlaylistId(channelId) {
-    var request = gapi.client.youtube.channels.list({
-        id: channelId,
-        part: 'contentDetails'
-    })
-
-    request.execute(function(response) {
-        playlistId = response.result.items[0].contentDetails.relatedPlaylists.uploads
-        requestVideoPlaylist(playlistId)
-    })
 }
 
 function requestUserSubscriptionsList(pageToken) {
@@ -44,6 +32,20 @@ function requestUserSubscriptionsList(pageToken) {
         }
     })
 
+}
+
+//Retrieve the uploads playlist id.
+function requestUserUploadsPlaylistId(channelId) {
+    var request = gapi.client.youtube.channels.list({
+        id: channelId,
+        part: 'contentDetails'
+    })
+
+    request.execute(function(response) {
+        playlistId = response.result.items[0].contentDetails.relatedPlaylists.uploads
+        console.log(playlistId)
+        requestVideoPlaylist(playlistId)
+    })
 }
 
 // Retrieve a playist of videos.
@@ -211,6 +213,8 @@ function populateQuickSearch(subscriptionListItems) {
         })
     })
 
+    topTenList = channelDatums.slice(0, 10)
+
     $('.typeahead').typeahead({
         name: 'channels',
         local: channelDatums,
@@ -223,7 +227,7 @@ function populateQuickSearch(subscriptionListItems) {
         window.clearInterval(scrollInterval)
 
         $('#videoContainer').empty()
-        channelId = datum.channelId
+        currentChannelId = datum.channelId
 
         var channelName = datum.value
         var button = $('#channelSelector button')
@@ -232,7 +236,7 @@ function populateQuickSearch(subscriptionListItems) {
         button.append($('<span class="caret"></span>'))
         $('.typeahead').typeahead('setQuery', '')
 
-        requestUserUploadsPlaylistId(channelId)
+        requestUserUploadsPlaylistId(currentChannelId)
         scrollInterval = setInterval(infiniteScroll, 500)
 
     })
