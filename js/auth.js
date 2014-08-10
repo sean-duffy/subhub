@@ -27,7 +27,7 @@ function checkAuth() {
 
 // Handles the result of a gapi.auth.authorize() call.
 function handleAuthResult(authResult) {
-  if (authResult.status.signed_in) {
+  if (authResult) {
     // Auth was successful; hide the things related to prompting for auth and show the things
     // that should be visible after auth succeeds.
     $('.pre-auth').hide();
