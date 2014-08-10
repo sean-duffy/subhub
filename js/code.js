@@ -7,6 +7,7 @@ function handleAPILoaded() {
     scrollInterval = setInterval(infiniteScroll, 500)
 }
 
+// Retrieve the users subscriptions
 function requestUserSubscriptionsList(pageToken) {
     var requestOptions = {
         part: 'snippet',
@@ -31,10 +32,9 @@ function requestUserSubscriptionsList(pageToken) {
             populateQuickSearch(subscriptionListItems)
         }
     })
-
 }
 
-//Retrieve the uploads playlist id.
+// Retrieve the uploads playlist id
 function requestUserUploadsPlaylistId(channelId) {
     var request = gapi.client.youtube.channels.list({
         id: channelId,
@@ -48,7 +48,7 @@ function requestUserUploadsPlaylistId(channelId) {
     })
 }
 
-// Retrieve a playist of videos.
+// Retrieve a playist of videos
 function requestVideoPlaylist(playlistId, pageToken) {
 
     var loadingRow = $('<div>')
@@ -86,6 +86,7 @@ function requestVideoPlaylist(playlistId, pageToken) {
     })
 }
 
+// Get the details of a list of videos
 function requestVideoContentDetails(videoIdList) {
 
     var requestOptions = {
@@ -110,6 +111,7 @@ function requestVideoContentDetails(videoIdList) {
     })
 }
 
+// Render the thumbnails for a list of videos
 function createThumbnailRow(videoItems) {
     var thumbnailRow = $('<div>')
     thumbnailRow.addClass('row videoRow')
@@ -123,7 +125,7 @@ function createThumbnailRow(videoItems) {
     $('#videoContainer').append(thumbnailRow)
 }
 
-// Create a thumbnail for a video snippet.
+// Create a box for a video
 function createVideoBox(videoItem) {
     var id = videoItem.id
     var videoSnippet = videoItem.snippet
@@ -170,6 +172,7 @@ function createVideoBox(videoItem) {
     return videoBox
 }
 
+// Format a video's length into a human readable format
 function formatDurationTime(duration) {
 
     var timeEx = /PT(?:(\d\d?)H)?(?:(\d\d?)M)?(\d\d?)S/
@@ -195,13 +198,13 @@ function formatDurationTime(duration) {
     textDuration += match[2]
 
     return textDuration
-
 }
 
 function populateChannelDropdown(subscriptionListItems) {
 
 }
 
+// Populate the quick search box with channels
 function populateQuickSearch(subscriptionListItems) {
 
     var channelDatums = []
@@ -243,6 +246,7 @@ function populateQuickSearch(subscriptionListItems) {
 
 }
 
+// Load the next page of videos
 function nextPage() {
     if (currentToken != nextPageToken) {
         requestVideoPlaylist(playlistId, nextPageToken)
@@ -250,6 +254,7 @@ function nextPage() {
     currentToken = nextPageToken
 }
 
+// Load more videos when the user reaches the bottom of the page
 function infiniteScroll() {
     var totalHeight, currentScroll, visibleHeight
 
