@@ -251,7 +251,7 @@ function nextPage() {
 }
 
 function infiniteScroll() {
-    var totalHeight, currentScroll, visibleHeight;
+    var totalHeight, currentScroll, visibleHeight
 
     if (document.documentElement.scrollTop) {
         currentScroll = document.documentElement.scrollTop

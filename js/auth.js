@@ -1,16 +1,16 @@
 // The client id is obtained from the Google APIs Console at https://code.google.com/apis/console
 // If you run access this code from a server other than http://localhost, you need to register
 // your own client id.
-var OAUTH2_CLIENT_ID = '18466168426-v7529jfim3ed6kdjhjv4eh88sihrnnlh.apps.googleusercontent.com';
+var OAUTH2_CLIENT_ID = '18466168426-v7529jfim3ed6kdjhjv4eh88sihrnnlh.apps.googleusercontent.com'
 var OAUTH2_SCOPES = [
   'https://www.googleapis.com/auth/youtube'
-];
+]
 
 // This callback is invoked by the Google APIs JS client automatically when it is loaded.
 googleApiClientReady = function() {
   gapi.auth.init(function() {
-    window.setTimeout(checkAuth, 1);
-  });
+    window.setTimeout(checkAuth, 1)
+  })
 }
 
 // Attempt the immediate OAuth 2 client flow as soon as the page is loaded.
@@ -22,7 +22,7 @@ function checkAuth() {
     client_id: OAUTH2_CLIENT_ID,
     scope: OAUTH2_SCOPES,
     immediate: false
-  }, handleAuthResult);
+  }, handleAuthResult)
 }
 
 // Handles the result of a gapi.auth.authorize() call.
@@ -30,8 +30,8 @@ function handleAuthResult(authResult) {
   if (authResult) {
     // Auth was successful; hide the things related to prompting for auth and show the things
     // that should be visible after auth succeeds.
-    $('.pre-auth').hide();
-    loadAPIClientInterfaces();
+    $('.pre-auth').hide()
+    loadAPIClientInterfaces()
   } else {
     // Make the #login-link clickable, and attempt a non-immediate OAuth 2 client flow.
     // The current function will be called when that flow is complete.
@@ -40,8 +40,8 @@ function handleAuthResult(authResult) {
         client_id: OAUTH2_CLIENT_ID,
         scope: OAUTH2_SCOPES,
         immediate: false
-        }, handleAuthResult);
-    });
+        }, handleAuthResult)
+    })
   }
 }
 
@@ -50,6 +50,6 @@ function handleAuthResult(authResult) {
 // http://code.google.com/p/google-api-javascript-client/wiki/GettingStarted#Loading_the_Client
 function loadAPIClientInterfaces() {
   gapi.client.load('youtube', 'v3', function() {
-    handleAPILoaded();
-  });
+    handleAPILoaded()
+  })
 }
