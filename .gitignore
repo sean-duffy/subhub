@@ -1,2 +1,9 @@
 .DS_Store
 *.swp
+
+# Project Specific Binaries
+/subhub
+
+# User Credentials
+client_secrets.json
+request.token
