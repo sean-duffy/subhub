@@ -7,3 +7,6 @@
 # User Credentials
 client_secrets.json
 request.token
+
+# Database
+db.sqlite
