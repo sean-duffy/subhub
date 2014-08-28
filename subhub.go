@@ -38,6 +38,22 @@ func ChannelUploadsPlaylistId(service *youtube.Service, channelId string) (strin
 	return response.Items[0].ContentDetails.RelatedPlaylists.Uploads, nil
 }
 
+func PlaylistVideoIds(service *youtube.Service, playlistId string) ([]string, error) {
+	call := service.PlaylistItems.List("snippet").MaxResults(4).PlaylistId(playlistId)
+
+	response, err := call.Do()
+	if err != nil {
+		return []string{}, err
+	}
+
+	videoIds := []string{}
+	for _, playlistItem := range response.Items {
+		videoIds = append(videoIds, playlistItem.Snippet.ResourceId.VideoId)
+	}
+
+	return videoIds, nil
+}
+
 func main() {
 	client, err := buildOAuthHTTPClient(youtube.YoutubeReadonlyScope)
 	if err != nil {
@@ -68,6 +84,11 @@ func main() {
 	userSubscriptionIds, err := UserSubscriptionIds(service)
 
 	for _, channelId := range userSubscriptionIds {
-		log.Printf("%v\n", channelId)
+		playlistId, err := ChannelUploadsPlaylistId(service, channelId)
+		if err != nil {
+			log.Fatalf("Could not get uploads playlist ID: %v", err)
+		}
+
+		log.Printf("%v\n", playlistId)
 	}
 }
