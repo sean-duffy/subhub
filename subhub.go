@@ -21,7 +21,7 @@ func UserSubscriptionIds(service *youtube.Service) ([]string, error) {
 
 	channelIds := []string{}
 	for _, subscription := range response.Items {
-		channelIds = append(channelIds, subscription.Id)
+		channelIds = append(channelIds, subscription.Snippet.ChannelId)
 	}
 
 	return channelIds, nil
