@@ -54,6 +54,17 @@ func PlaylistVideoIds(service *youtube.Service, playlistId string) ([]string, er
 	return videoIds, nil
 }
 
+func VideoContentDetails(service *youtube.Service, videoId string) (*youtube.Video, error) {
+	call := service.Videos.List("snippet,contentDetails").Id(videoId)
+
+	response, err := call.Do()
+	if err != nil {
+		return nil, err
+	}
+
+	return response.Items[0], nil
+}
+
 func main() {
 	client, err := buildOAuthHTTPClient(youtube.YoutubeReadonlyScope)
 	if err != nil {
@@ -89,6 +100,19 @@ func main() {
 			log.Fatalf("Could not get uploads playlist ID: %v", err)
 		}
 
-		log.Printf("%v\n", playlistId)
+		videoIds, err := PlaylistVideoIds(service, playlistId)
+		if err != nil {
+			log.Fatalf("Could not get video IDs from playlist: %v", err)
+		}
+
+		log.Print("\n")
+		for _, videoId := range videoIds {
+			video, err := VideoContentDetails(service, videoId)
+			if err != nil {
+				log.Fatalf("Could not get content details for video: %v", err)
+			}
+			log.Printf("%#v\n", video.Snippet.Title)
+		}
+
 	}
 }
