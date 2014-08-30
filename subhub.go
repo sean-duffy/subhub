@@ -11,8 +11,8 @@ import (
 
 // UserSubscriptionIds returns a list of ChannelIds belonging
 // to the user's subscribed channels
-func UserSubscriptionIds(service *youtube.Service) ([]string, error) {
-	call := service.Subscriptions.List("snippet").Mine(true).MaxResults(2)
+func UserSubscriptionIds(service *youtube.Service, maxResults int64) ([]string, error) {
+	call := service.Subscriptions.List("snippet").Mine(true).MaxResults(maxResults)
 
 	response, err := call.Do()
 	if err != nil {
@@ -38,8 +38,8 @@ func ChannelUploadsPlaylistId(service *youtube.Service, channelId string) (strin
 	return response.Items[0].ContentDetails.RelatedPlaylists.Uploads, nil
 }
 
-func PlaylistVideoIds(service *youtube.Service, playlistId string) ([]string, error) {
-	call := service.PlaylistItems.List("snippet").MaxResults(4).PlaylistId(playlistId)
+func PlaylistVideoIds(service *youtube.Service, playlistId string, maxResults int64) ([]string, error) {
+	call := service.PlaylistItems.List("snippet").MaxResults(maxResults).PlaylistId(playlistId)
 
 	response, err := call.Do()
 	if err != nil {
