@@ -54,8 +54,8 @@ func PlaylistVideoIds(service *youtube.Service, playlistId string, maxResults in
 	return videoIds, nil
 }
 
-func VideoContentDetails(service *youtube.Service, videoId string) (*youtube.Video, error) {
-	call := service.Videos.List("snippet,contentDetails").Id(videoId)
+func VideoSnippet(service *youtube.Service, videoId string) (*youtube.Video, error) {
+	call := service.Videos.List("snippet").Id(videoId)
 
 	response, err := call.Do()
 	if err != nil {
