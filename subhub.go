@@ -1,13 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"io"
+	"database/sql"
+	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/coopernurse/gorp"
 	"github.com/gorilla/mux"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/sean-duffy/subhub/core"
 	"github.com/stretchr/graceful"
 )
 
@@ -18,13 +22,34 @@ var (
 func serveUploads(w http.ResponseWriter, r *http.Request) {
 	pathSplit := strings.Split(r.URL.String(), "/")
 	if len(pathSplit) < 3 {
-		http.Error(w, "404 page not found", http.StatusNotFound)
+		http.Error(w, "404: Page not found", http.StatusNotFound)
 		return
 	}
 	channelId := pathSplit[2]
 
 	w.Header().Add("Content-Type", "text/html")
-	io.WriteString(w, fmt.Sprintf("Hello, %s", channelId))
+
+	db, err := sql.Open("sqlite3", os.ExpandEnv("db.sqlite"))
+	if err != nil {
+		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
+		return
+	}
+
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
+
+	uploads, err := dbmap.Select(core.Video{}, "select * from videos where ChannelId=? order by PublishedAt desc", channelId)
+	if err != nil {
+		http.Error(w, "500: Database error", http.StatusInternalServerError)
+		return
+	}
+
+	uploadsJSON, err := json.Marshal(uploads)
+	if err != nil {
+		http.Error(w, "500: Error parsing database", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(uploadsJSON)
 }
 
 func main() {
