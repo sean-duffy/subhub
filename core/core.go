@@ -80,7 +80,7 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 		log.Fatalf("Could not get uploads playlist ID: %v", err)
 	}
 
-	videoIds, err := PlaylistVideoIds(service, playlistId, 10)
+	videoIds, err := PlaylistVideoIds(service, playlistId, 50)
 	if err != nil {
 		log.Fatalf("Could not get video IDs from playlist: %v", err)
 	}
@@ -132,7 +132,7 @@ func initDb() (*gorp.DbMap, error) {
 	return dbmap, nil
 }
 
-func main() {
+func GetData() {
 	client, err := buildOAuthHTTPClient(youtube.YoutubeReadonlyScope)
 	if err != nil {
 		log.Fatalf("Error building OAuth client: %v", err)
