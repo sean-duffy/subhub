@@ -48,7 +48,6 @@ function requestUploads(channelId) {
 
 // Get the details of a list of videos
 function requestVideoContentDetails(videoIdList) {
-
     var requestOptions = {
         id: videoIdList,
         part: 'snippet,contentDetails'
