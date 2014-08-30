@@ -11,8 +11,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// UserSubscriptionIds returns a list of ChannelIds belonging
-// to the user's subscribed channels
+// UserSubscriptionIds returns a list of the IDs for the user's subscribed
+// channels. The maximum number of channels returned is specified by maxResults.
 func UserSubscriptionIds(service *youtube.Service, maxResults int64) ([]string, error) {
 	call := service.Subscriptions.List("snippet").Mine(true).MaxResults(maxResults)
 
@@ -29,6 +29,8 @@ func UserSubscriptionIds(service *youtube.Service, maxResults int64) ([]string, 
 	return channelIds, nil
 }
 
+// ChannelUploadsPlaylistId returns the ID of the playlist containing the uploads for
+// the channel specified by channelId.
 func ChannelUploadsPlaylistId(service *youtube.Service, channelId string) (string, error) {
 	call := service.Channels.List("contentDetails").Id(channelId)
 
@@ -40,6 +42,8 @@ func ChannelUploadsPlaylistId(service *youtube.Service, channelId string) (strin
 	return response.Items[0].ContentDetails.RelatedPlaylists.Uploads, nil
 }
 
+// PlaylistVideoIds returns a list of the IDs of the videos in the playlist specified by
+// playlistId. The maximum number of video IDs returned is specified by maxResults.
 func PlaylistVideoIds(service *youtube.Service, playlistId string, maxResults int64) ([]string, error) {
 	call := service.PlaylistItems.List("snippet").MaxResults(maxResults).PlaylistId(playlistId)
 
@@ -56,6 +60,7 @@ func PlaylistVideoIds(service *youtube.Service, playlistId string, maxResults in
 	return videoIds, nil
 }
 
+// VideoSnippet returns the video with the ID videoId, with the snippet part included.
 func VideoSnippet(service *youtube.Service, videoId string) (*youtube.Video, error) {
 	call := service.Videos.List("snippet").Id(videoId)
 
@@ -67,6 +72,8 @@ func VideoSnippet(service *youtube.Service, videoId string) (*youtube.Video, err
 	return response.Items[0], nil
 }
 
+// saveUploads saves the details of the uploads belonging to the channel specified by
+// channelId to the database.
 func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) error {
 	playlistId, err := ChannelUploadsPlaylistId(service, channelId)
 	if err != nil {
@@ -107,6 +114,7 @@ type Video struct {
 	PublishedAt time.Time
 }
 
+// initDb opens the database and creates the videos table if necessary.
 func initDb() (*gorp.DbMap, error) {
 	db, err := sql.Open("sqlite3", os.ExpandEnv("$HOME/db.sqlite"))
 	if err != nil {
