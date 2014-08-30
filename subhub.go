@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"time"
 
 	"code.google.com/p/google-api-go-client/youtube/v3"
+	"github.com/coopernurse/gorp"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -65,6 +67,63 @@ func VideoSnippet(service *youtube.Service, videoId string) (*youtube.Video, err
 	return response.Items[0], nil
 }
 
+func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) error {
+	playlistId, err := ChannelUploadsPlaylistId(service, channelId)
+	if err != nil {
+		log.Fatalf("Could not get uploads playlist ID: %v", err)
+	}
+
+	videoIds, err := PlaylistVideoIds(service, playlistId, 10)
+	if err != nil {
+		log.Fatalf("Could not get video IDs from playlist: %v", err)
+	}
+
+	for _, videoId := range videoIds {
+		video, err := VideoSnippet(service, videoId)
+		if err != nil {
+			return err
+		}
+
+		publishedAt, err := time.Parse(time.RFC3339Nano, video.Snippet.PublishedAt)
+		if err != nil {
+			return err
+		}
+
+		videoRecord := Video{video.Id, video.Snippet.ChannelId, publishedAt}
+		count, err := dbmap.SelectInt("select count(*) from videos where Id=?", video.Id)
+		if count == 0 {
+			err = dbmap.Insert(&videoRecord)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type Video struct {
+	Id          string
+	ChannelId   string
+	PublishedAt time.Time
+}
+
+func initDb() (*gorp.DbMap, error) {
+	db, err := sql.Open("sqlite3", os.ExpandEnv("$HOME/db.sqlite"))
+	if err != nil {
+		return nil, err
+	}
+
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
+	dbmap.AddTableWithName(Video{}, "videos").SetKeys(false, "Id")
+
+	err = dbmap.CreateTablesIfNotExists()
+	if err != nil {
+		return nil, err
+	}
+
+	return dbmap, nil
+}
+
 func main() {
 	client, err := buildOAuthHTTPClient(youtube.YoutubeReadonlyScope)
 	if err != nil {
@@ -76,43 +135,18 @@ func main() {
 		log.Fatalf("Error creating YouTube client: %v", err)
 	}
 
-	db, err := sql.Open("sqlite3", os.ExpandEnv("$HOME/db.sqlite"))
+	dbmap, err := initDb()
 	if err != nil {
-		log.Fatalf("Could not open database: %v", err)
+		log.Fatalf("Could not initialise database: %v", err)
 	}
+	defer dbmap.Db.Close()
 
-	err = db.QueryRow(`
-    CREATE TABLE IF NOT EXISTS
-    videos (
-        id integer primary key,
-        publishedAt datetime,
-        channelId integer)
-    `).Scan()
-	if err != nil && err != sql.ErrNoRows {
-		log.Fatalf("Could not create table: %v", err)
-	}
-
-	userSubscriptionIds, err := UserSubscriptionIds(service)
+	userSubscriptionIds, err := UserSubscriptionIds(service, 5)
 
 	for _, channelId := range userSubscriptionIds {
-		playlistId, err := ChannelUploadsPlaylistId(service, channelId)
+		err = saveUploads(dbmap, service, channelId)
 		if err != nil {
-			log.Fatalf("Could not get uploads playlist ID: %v", err)
+			log.Fatalf("Could not save channel uploads: %v", err)
 		}
-
-		videoIds, err := PlaylistVideoIds(service, playlistId)
-		if err != nil {
-			log.Fatalf("Could not get video IDs from playlist: %v", err)
-		}
-
-		log.Print("\n")
-		for _, videoId := range videoIds {
-			video, err := VideoContentDetails(service, videoId)
-			if err != nil {
-				log.Fatalf("Could not get content details for video: %v", err)
-			}
-			log.Printf("%#v\n", video.Snippet.Title)
-		}
-
 	}
 }
