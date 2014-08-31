@@ -3,10 +3,12 @@
 
 # Project Specific Binaries
 /subhub
+/core/core
+/scripts/scripts
 
 # User Credentials
-client_secrets.json
-request.token
+/client_secrets.json
+/request.token
 
 # Database
 db.sqlite

@@ -34,61 +34,20 @@ function requestUserSubscriptionsList(pageToken) {
     })
 }
 
-// Retrieve the uploads playlist id
-function requestUserUploadsPlaylistId(channelId) {
-    var request = gapi.client.youtube.channels.list({
-        id: channelId,
-        part: 'contentDetails'
-    })
-
-    request.execute(function(response) {
-        playlistId = response.result.items[0].contentDetails.relatedPlaylists.uploads
-        console.log(playlistId)
-        requestVideoPlaylist(playlistId)
-    })
-}
-
-// Retrieve a playist of videos
-function requestVideoPlaylist(playlistId, pageToken) {
-
-    var loadingRow = $('<div>')
-    loadingRow.addClass('row loading')
-    loadingRow.append('<img src="img/loader.gif">')
-    $('#videoContainer').append(loadingRow)
-
-    var requestOptions = {
-        playlistId: playlistId,
-        part: 'snippet',
-        maxResults: 4
-    }
-
-    if (pageToken) {
-        requestOptions.pageToken = pageToken
-    }
-
-    var request = gapi.client.youtube.playlistItems.list(requestOptions)
-    request.execute(function(response) {
-        var playlistItems = response.result.items
-        nextPageToken = response.result.nextPageToken
-
-        if (playlistItems) {
-            videoIdList = ''
-
-            jQuery.each(playlistItems, function(index, item) {
-                videoIdList += ',' + item.snippet.resourceId.videoId
-            })
-
-            requestVideoContentDetails(videoIdList)
-        } else {
-            $('#video-container').html('No videos available.')
-        }
-
+function requestUploads(channelId) {
+    $.get("uploads/" + channelId, function(data) {
+        uploads = JSON.parse(data)
+        videoIdList = ""
+        $.each(uploads, function(index, video) {
+            videoIdList += "," + video.Id
+        })
+        console.log(videoIdList)
+        requestVideoContentDetails(videoIdList)
     })
 }
 
 // Get the details of a list of videos
 function requestVideoContentDetails(videoIdList) {
-
     var requestOptions = {
         id: videoIdList,
         part: 'snippet,contentDetails'
@@ -99,7 +58,7 @@ function requestVideoContentDetails(videoIdList) {
         var videoItems = response.items
 
         var itemRow = []
-        jQuery.each(videoItems, function(index, item) {
+        $.each(videoItems, function(index, item) {
 
             itemRow.push(item)
 
@@ -239,9 +198,8 @@ function populateQuickSearch(subscriptionListItems) {
         button.append($('<span class="caret"></span>'))
         $('.typeahead').typeahead('setQuery', '')
 
-        requestUserUploadsPlaylistId(currentChannelId)
+        requestUploads(currentChannelId)
         scrollInterval = setInterval(infiniteScroll, 500)
-
     })
 
 }

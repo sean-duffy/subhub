@@ -2,159 +2,68 @@ package main
 
 import (
 	"database/sql"
-	"log"
+	"encoding/json"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 
-	"code.google.com/p/google-api-go-client/youtube/v3"
 	"github.com/coopernurse/gorp"
+	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/sean-duffy/subhub/core"
+	"github.com/stretchr/graceful"
 )
 
-// UserSubscriptionIds returns a list of the IDs for the user's subscribed
-// channels. The maximum number of channels returned is specified by maxResults.
-func UserSubscriptionIds(service *youtube.Service, maxResults int64) ([]string, error) {
-	call := service.Subscriptions.List("snippet").Mine(true).MaxResults(maxResults)
+var (
+	listenPort = "8000"
+)
 
-	response, err := call.Do()
+func serveUploads(w http.ResponseWriter, r *http.Request) {
+	pathSplit := strings.Split(r.URL.String(), "/")
+	if len(pathSplit) < 3 {
+		http.Error(w, "404: Page not found", http.StatusNotFound)
+		return
+	}
+	channelId := pathSplit[2]
+
+	w.Header().Add("Content-Type", "text/html")
+
+	db, err := sql.Open("sqlite3", os.ExpandEnv("db.sqlite"))
 	if err != nil {
-		return nil, err
-	}
-
-	channelIds := []string{}
-	for _, subscription := range response.Items {
-		channelIds = append(channelIds, subscription.Snippet.ResourceId.ChannelId)
-	}
-
-	return channelIds, nil
-}
-
-// ChannelUploadsPlaylistId returns the ID of the playlist containing the uploads for
-// the channel specified by channelId.
-func ChannelUploadsPlaylistId(service *youtube.Service, channelId string) (string, error) {
-	call := service.Channels.List("contentDetails").Id(channelId)
-
-	response, err := call.Do()
-	if err != nil {
-		return "", err
-	}
-
-	return response.Items[0].ContentDetails.RelatedPlaylists.Uploads, nil
-}
-
-// PlaylistVideoIds returns a list of the IDs of the videos in the playlist specified by
-// playlistId. The maximum number of video IDs returned is specified by maxResults.
-func PlaylistVideoIds(service *youtube.Service, playlistId string, maxResults int64) ([]string, error) {
-	call := service.PlaylistItems.List("snippet").MaxResults(maxResults).PlaylistId(playlistId)
-
-	response, err := call.Do()
-	if err != nil {
-		return []string{}, err
-	}
-
-	videoIds := []string{}
-	for _, playlistItem := range response.Items {
-		videoIds = append(videoIds, playlistItem.Snippet.ResourceId.VideoId)
-	}
-
-	return videoIds, nil
-}
-
-// VideoSnippet returns the video with the ID videoId, with the snippet part included.
-func VideoSnippet(service *youtube.Service, videoId string) (*youtube.Video, error) {
-	call := service.Videos.List("snippet").Id(videoId)
-
-	response, err := call.Do()
-	if err != nil {
-		return nil, err
-	}
-
-	return response.Items[0], nil
-}
-
-// saveUploads saves the details of the uploads belonging to the channel specified by
-// channelId to the database.
-func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) error {
-	playlistId, err := ChannelUploadsPlaylistId(service, channelId)
-	if err != nil {
-		log.Fatalf("Could not get uploads playlist ID: %v", err)
-	}
-
-	videoIds, err := PlaylistVideoIds(service, playlistId, 10)
-	if err != nil {
-		log.Fatalf("Could not get video IDs from playlist: %v", err)
-	}
-
-	for _, videoId := range videoIds {
-		video, err := VideoSnippet(service, videoId)
-		if err != nil {
-			return err
-		}
-
-		publishedAt, err := time.Parse(time.RFC3339Nano, video.Snippet.PublishedAt)
-		if err != nil {
-			return err
-		}
-
-		videoRecord := Video{video.Id, video.Snippet.ChannelId, publishedAt}
-		count, err := dbmap.SelectInt("select count(*) from videos where Id=?", video.Id)
-		if count == 0 {
-			err = dbmap.Insert(&videoRecord)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-type Video struct {
-	Id          string
-	ChannelId   string
-	PublishedAt time.Time
-}
-
-// initDb opens the database and creates the videos table if necessary.
-func initDb() (*gorp.DbMap, error) {
-	db, err := sql.Open("sqlite3", os.ExpandEnv("$HOME/db.sqlite"))
-	if err != nil {
-		return nil, err
+		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
+		return
 	}
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
-	dbmap.AddTableWithName(Video{}, "videos").SetKeys(false, "Id")
 
-	err = dbmap.CreateTablesIfNotExists()
+	uploads, err := dbmap.Select(core.Video{}, "select * from videos where ChannelId=? order by PublishedAt desc", channelId)
 	if err != nil {
-		return nil, err
+		http.Error(w, "500: Database error", http.StatusInternalServerError)
+		return
 	}
 
-	return dbmap, nil
+	uploadsJSON, err := json.Marshal(uploads)
+	if err != nil {
+		http.Error(w, "500: Error parsing database", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(uploadsJSON)
 }
 
 func main() {
-	client, err := buildOAuthHTTPClient(youtube.YoutubeReadonlyScope)
-	if err != nil {
-		log.Fatalf("Error building OAuth client: %v", err)
-	}
+	mux := mux.NewRouter()
 
-	service, err := youtube.New(client)
-	if err != nil {
-		log.Fatalf("Error creating YouTube client: %v", err)
-	}
+	staticContent := http.FileServer(http.Dir("http"))
 
-	dbmap, err := initDb()
-	if err != nil {
-		log.Fatalf("Could not initialise database: %v", err)
-	}
-	defer dbmap.Db.Close()
+	mux.PathPrefix("/js").Handler(staticContent)
+	mux.PathPrefix("/css").Handler(staticContent)
+	mux.PathPrefix("/img").Handler(staticContent)
+	mux.PathPrefix("/fonts").Handler(staticContent)
+	mux.Path("/").Handler(staticContent)
 
-	userSubscriptionIds, err := UserSubscriptionIds(service, 5)
+	mux.PathPrefix("/uploads").HandlerFunc(serveUploads)
 
-	for _, channelId := range userSubscriptionIds {
-		err = saveUploads(dbmap, service, channelId)
-		if err != nil {
-			log.Fatalf("Could not save channel uploads: %v", err)
-		}
-	}
+	graceful.Run(":"+listenPort, 10*time.Second, mux)
 }
