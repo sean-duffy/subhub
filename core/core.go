@@ -45,16 +45,36 @@ func ChannelUploadsPlaylistId(service *youtube.Service, channelId string) (strin
 // PlaylistVideoIds returns a list of the IDs of the videos in the playlist specified by
 // playlistId. The maximum number of video IDs returned is specified by maxResults.
 func PlaylistVideoIds(service *youtube.Service, playlistId string, maxResults int64) ([]string, error) {
-	call := service.PlaylistItems.List("snippet").MaxResults(maxResults).PlaylistId(playlistId)
+	var pageMaxResults int64
+	var nextPageToken string
 
-	response, err := call.Do()
-	if err != nil {
-		return []string{}, err
-	}
-
+	baseCall := service.PlaylistItems.List("snippet").PlaylistId(playlistId)
 	videoIds := []string{}
-	for _, playlistItem := range response.Items {
-		videoIds = append(videoIds, playlistItem.Snippet.ResourceId.VideoId)
+	firstPage := true
+
+	for (nextPageToken != "" || firstPage) && maxResults > 0 {
+		if maxResults > 50 {
+			pageMaxResults = 50
+		} else {
+			pageMaxResults = maxResults
+		}
+		maxResults -= pageMaxResults
+
+		call := baseCall.MaxResults(pageMaxResults).PageToken(nextPageToken)
+
+		response, err := call.Do()
+		if err != nil {
+			return []string{}, err
+		}
+
+		//log.Printf("%v\n", response.Items[0].Snippet.ChannelTitle)
+		nextPageToken = response.NextPageToken
+
+		for _, playlistItem := range response.Items {
+			videoIds = append(videoIds, playlistItem.Snippet.ResourceId.VideoId)
+		}
+
+		firstPage = false
 	}
 
 	return videoIds, nil
@@ -80,7 +100,7 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 		log.Fatalf("Could not get uploads playlist ID: %v", err)
 	}
 
-	videoIds, err := PlaylistVideoIds(service, playlistId, 50)
+	videoIds, err := PlaylistVideoIds(service, playlistId, 100)
 	if err != nil {
 		log.Fatalf("Could not get video IDs from playlist: %v", err)
 	}
