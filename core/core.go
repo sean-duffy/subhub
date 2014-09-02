@@ -107,6 +107,8 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 		log.Fatalf("Could not get video IDs from playlist: %v", err)
 	}
 
+	log.Println("Getting videos for", channel.Snippet.Title)
+
 	for _, videoId := range videoIds {
 		video, err := VideoSnippet(service, videoId)
 		if err != nil {
@@ -132,6 +134,8 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 	if err != nil {
 		return err
 	}
+
+	log.Printf("Saved %v videos", stored)
 
 	channelRecord := Channel{channel.Id, channel.Snippet.Title, channel.Statistics.VideoCount, uint64(stored), time.Now()}
 	count, err := dbmap.SelectInt("select count(*) from channels where Id=?", channel.Id)
