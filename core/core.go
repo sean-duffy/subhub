@@ -29,32 +29,52 @@ func UserSubscriptionIds(service *youtube.Service, maxResults int64) ([]string, 
 	return channelIds, nil
 }
 
-// ChannelUploadsPlaylistId returns the ID of the playlist containing the uploads for
-// the channel specified by channelId.
-func ChannelUploadsPlaylistId(service *youtube.Service, channelId string) (string, error) {
-	call := service.Channels.List("contentDetails").Id(channelId)
+// ChannelDetails returns the channel specified by channelId, including
+// the snippet and contentDetails.
+func ChannelDetails(service *youtube.Service, channelId string) (*youtube.Channel, error) {
+	call := service.Channels.List("snippet,contentDetails,statistics").Id(channelId)
 
 	response, err := call.Do()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return response.Items[0].ContentDetails.RelatedPlaylists.Uploads, nil
+	return response.Items[0], nil
 }
 
 // PlaylistVideoIds returns a list of the IDs of the videos in the playlist specified by
 // playlistId. The maximum number of video IDs returned is specified by maxResults.
 func PlaylistVideoIds(service *youtube.Service, playlistId string, maxResults int64) ([]string, error) {
-	call := service.PlaylistItems.List("snippet").MaxResults(maxResults).PlaylistId(playlistId)
+	var pageMaxResults int64
+	var nextPageToken string
 
-	response, err := call.Do()
-	if err != nil {
-		return []string{}, err
-	}
-
+	baseCall := service.PlaylistItems.List("snippet").PlaylistId(playlistId)
 	videoIds := []string{}
-	for _, playlistItem := range response.Items {
-		videoIds = append(videoIds, playlistItem.Snippet.ResourceId.VideoId)
+	firstPage := true
+
+	for (nextPageToken != "" || firstPage) && maxResults > 0 {
+		if maxResults > 50 {
+			pageMaxResults = 50
+		} else {
+			pageMaxResults = maxResults
+		}
+		maxResults -= pageMaxResults
+
+		call := baseCall.MaxResults(pageMaxResults).PageToken(nextPageToken)
+
+		response, err := call.Do()
+		if err != nil {
+			return []string{}, err
+		}
+
+		//log.Printf("%v\n", response.Items[0].Snippet.ChannelTitle)
+		nextPageToken = response.NextPageToken
+
+		for _, playlistItem := range response.Items {
+			videoIds = append(videoIds, playlistItem.Snippet.ResourceId.VideoId)
+		}
+
+		firstPage = false
 	}
 
 	return videoIds, nil
@@ -75,15 +95,19 @@ func VideoSnippet(service *youtube.Service, videoId string) (*youtube.Video, err
 // saveUploads saves the details of the uploads belonging to the channel specified by
 // channelId to the database.
 func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) error {
-	playlistId, err := ChannelUploadsPlaylistId(service, channelId)
+	channel, err := ChannelDetails(service, channelId)
 	if err != nil {
-		log.Fatalf("Could not get uploads playlist ID: %v", err)
+		log.Fatalf("Could not get channel details: %v", err)
 	}
 
-	videoIds, err := PlaylistVideoIds(service, playlistId, 50)
+	playlistId := channel.ContentDetails.RelatedPlaylists.Uploads
+
+	videoIds, err := PlaylistVideoIds(service, playlistId, 100)
 	if err != nil {
 		log.Fatalf("Could not get video IDs from playlist: %v", err)
 	}
+
+	log.Println("Getting videos for", channel.Snippet.Title)
 
 	for _, videoId := range videoIds {
 		video, err := VideoSnippet(service, videoId)
@@ -105,13 +129,45 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 			}
 		}
 	}
+
+	stored, err := dbmap.SelectInt("select count(*) from videos where ChannelId=?", channel.Id)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Saved %v videos", stored)
+
+	channelRecord := Channel{channel.Id, channel.Snippet.Title, channel.Statistics.VideoCount, uint64(stored), time.Now()}
+	count, err := dbmap.SelectInt("select count(*) from channels where Id=?", channel.Id)
+	if count == 0 {
+		err = dbmap.Insert(&channelRecord)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = dbmap.Update(&channelRecord)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
+// Video is the database model for videos
 type Video struct {
 	Id          string
 	ChannelId   string
 	PublishedAt time.Time
+}
+
+// Channel is the database model for channels
+type Channel struct {
+	Id          string
+	Title       string
+	Uploads     uint64
+	Stored      uint64
+	LastUpdated time.Time
 }
 
 // initDb opens the database and creates the videos table if necessary.
@@ -123,6 +179,7 @@ func initDb() (*gorp.DbMap, error) {
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
 	dbmap.AddTableWithName(Video{}, "videos").SetKeys(false, "Id")
+	dbmap.AddTableWithName(Channel{}, "channels").SetKeys(false, "Id")
 
 	err = dbmap.CreateTablesIfNotExists()
 	if err != nil {

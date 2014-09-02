@@ -49,7 +49,10 @@ func serveUploads(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write(uploadsJSON)
+	_, err = w.Write(uploadsJSON)
+	if err != nil {
+		http.Error(w, "500: Error writing response", http.StatusInternalServerError)
+	}
 }
 
 func main() {
