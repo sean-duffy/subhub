@@ -1,10 +1,10 @@
 // Some variables to remember state.
 var currentChannelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
+var videoIdList = []
 var topTenList
 
 function handleAPILoaded() {
     requestUserSubscriptionsList()
-    scrollInterval = setInterval(infiniteScroll, 500)
 }
 
 // Retrieve the users subscriptions
@@ -37,19 +37,16 @@ function requestUserSubscriptionsList(pageToken) {
 function requestUploads(channelId) {
     $.get("uploads/" + channelId, function(data) {
         uploads = JSON.parse(data)
-        videoIdList = ""
         $.each(uploads, function(index, video) {
-            videoIdList += "," + video.Id
+            videoIdList.push(video.Id)
         })
-        console.log(videoIdList)
-        requestVideoContentDetails(videoIdList)
     })
 }
 
 // Get the details of a list of videos
-function requestVideoContentDetails(videoIdList) {
+function requestVideoContentDetails(videoIdString) {
     var requestOptions = {
-        id: videoIdList,
+        id: videoIdString,
         part: 'snippet,contentDetails'
     }
 
@@ -206,9 +203,16 @@ function populateQuickSearch(subscriptionListItems) {
 
 // Load the next page of videos
 function nextPage() {
-    if (currentToken != nextPageToken) {
-        requestVideoPlaylist(playlistId, nextPageToken)
+    var videoIdString = ""
+    for (var i = 0; i < 4; i++) {
+        item = videoIdList.shift()
+        if (item == undefined) {
+            break
+        } else {
+            videoIdString += ',' + item
+        }
     }
+    requestVideoContentDetails(videoIdString)
     currentToken = nextPageToken
 }
 
@@ -225,7 +229,8 @@ function infiniteScroll() {
     var totalHeight = document.body.offsetHeight
     var visibleHeight = document.documentElement.clientHeight
 
-    if (totalHeight <= currentScroll + visibleHeight && nextPageToken) {
+    if (totalHeight <= currentScroll + visibleHeight) {
+        console.log('hello')
         nextPage()
     }
 }
