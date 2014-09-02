@@ -53,15 +53,11 @@ function requestVideoContentDetails(videoIdString) {
     var request = gapi.client.youtube.videos.list(requestOptions)
     request.execute(function(response) {
         var videoItems = response.items
-
         var itemRow = []
         $.each(videoItems, function(index, item) {
-
             itemRow.push(item)
-
             if (index % 4 == 3 || item == videoItems[videoItems.length - 1]) {
                 createThumbnailRow(itemRow)
-                itemRow = []
             }
         })
     })
