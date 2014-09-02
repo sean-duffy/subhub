@@ -226,7 +226,6 @@ function infiniteScroll() {
     var visibleHeight = document.documentElement.clientHeight
 
     if (totalHeight <= currentScroll + visibleHeight) {
-        console.log('hello')
         nextPage()
     }
 }
