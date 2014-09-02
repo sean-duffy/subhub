@@ -29,17 +29,17 @@ func UserSubscriptionIds(service *youtube.Service, maxResults int64) ([]string, 
 	return channelIds, nil
 }
 
-// ChannelUploadsPlaylistId returns the ID of the playlist containing the uploads for
-// the channel specified by channelId.
-func ChannelUploadsPlaylistId(service *youtube.Service, channelId string) (string, error) {
-	call := service.Channels.List("contentDetails").Id(channelId)
+// ChannelDetails returns the channel specified by channelId, including
+// the snippet and contentDetails.
+func ChannelDetails(service *youtube.Service, channelId string) (*youtube.Channel, error) {
+	call := service.Channels.List("snippet,contentDetails,statistics").Id(channelId)
 
 	response, err := call.Do()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return response.Items[0].ContentDetails.RelatedPlaylists.Uploads, nil
+	return response.Items[0], nil
 }
 
 // PlaylistVideoIds returns a list of the IDs of the videos in the playlist specified by
@@ -95,10 +95,12 @@ func VideoSnippet(service *youtube.Service, videoId string) (*youtube.Video, err
 // saveUploads saves the details of the uploads belonging to the channel specified by
 // channelId to the database.
 func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) error {
-	playlistId, err := ChannelUploadsPlaylistId(service, channelId)
+	channel, err := ChannelDetails(service, channelId)
 	if err != nil {
-		log.Fatalf("Could not get uploads playlist ID: %v", err)
+		log.Fatalf("Could not get channel details: %v", err)
 	}
+
+	playlistId := channel.ContentDetails.RelatedPlaylists.Uploads
 
 	videoIds, err := PlaylistVideoIds(service, playlistId, 100)
 	if err != nil {
