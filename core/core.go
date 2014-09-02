@@ -127,13 +127,43 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 			}
 		}
 	}
+
+	stored, err := dbmap.SelectInt("select count(*) from videos where ChannelId=?", channel.Id)
+	if err != nil {
+		return err
+	}
+
+	channelRecord := Channel{channel.Id, channel.Snippet.Title, channel.Statistics.VideoCount, uint64(stored), time.Now()}
+	count, err := dbmap.SelectInt("select count(*) from channels where Id=?", channel.Id)
+	if count == 0 {
+		err = dbmap.Insert(&channelRecord)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = dbmap.Update(&channelRecord)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
+// Video is the database model for videos
 type Video struct {
 	Id          string
 	ChannelId   string
 	PublishedAt time.Time
+}
+
+// Channel is the database model for channels
+type Channel struct {
+	Id          string
+	Title       string
+	Uploads     uint64
+	Stored      uint64
+	LastUpdated time.Time
 }
 
 // initDb opens the database and creates the videos table if necessary.
@@ -145,6 +175,7 @@ func initDb() (*gorp.DbMap, error) {
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
 	dbmap.AddTableWithName(Video{}, "videos").SetKeys(false, "Id")
+	dbmap.AddTableWithName(Channel{}, "channels").SetKeys(false, "Id")
 
 	err = dbmap.CreateTablesIfNotExists()
 	if err != nil {
