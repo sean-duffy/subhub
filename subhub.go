@@ -33,9 +33,17 @@ func serveUploads(w http.ResponseWriter, r *http.Request) {
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
 
-	uploads, err := dbmap.Select(core.Video{}, "select * from videos where ChannelId=? order by PublishedAt desc", channelId)
+	query := "select * from videos %s'%s' order by PublishedAt desc"
+
+	if channelId == "all" {
+		query = fmt.Sprintf(query, "", "")
+	} else {
+		query = fmt.Sprintf(query, "where ChannelId=", channelId)
+	}
+
+	uploads, err := dbmap.Select(core.Video{}, query, channelId)
 	if err != nil {
-		http.Error(w, "500: Database error", http.StatusInternalServerError)
+		http.Error(w, "404: Page not found", http.StatusInternalServerError)
 		return
 	}
 
