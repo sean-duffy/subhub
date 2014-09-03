@@ -138,7 +138,7 @@ function formatDurationTime(duration) {
         textDuration += match[0] + ':'
     }
     if (match[1] != undefined) {
-        if (match[1].length < 2 and match[0] != undefined) {
+        if (match[1].length < 2 && match[0] != undefined) {
             textDuration += '0'
         }
         textDuration += match[1] + ':'
