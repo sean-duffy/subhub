@@ -129,7 +129,6 @@ function formatDurationTime(duration) {
 
     var timeRegex = /PT(?:(\d\d?)H)?(?:(\d\d?)M)?(?:(\d\d?)S)?/
 
-    console.log(duration)
     match = timeRegex.exec(duration)
     match = match.slice(1)
 
