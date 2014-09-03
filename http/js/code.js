@@ -196,10 +196,19 @@ function populateQuickSearch(subscriptionListItems) {
         button.append($('<span class="caret"></span>'))
         $('.typeahead').typeahead('setQuery', '')
 
+        videoIdList = []
         requestUploads(currentChannelId)
         scrollInterval = setInterval(infiniteScroll, 500)
     })
 
+    $('.dropdown-menu #all-channels').click(function() {
+        $('#videoContainer').empty()
+        videoIdList = []
+        requestUploads('all')
+        scrollInterval = setInterval(infiniteScroll, 500)
+    })
+
+    $('.dropdown-menu #all-channels').click()
 }
 
 // Load the next page of videos
@@ -209,12 +218,12 @@ function nextPage() {
         item = videoIdList.shift()
         if (item == undefined) {
             break
+            clearInterval(scrollInterval)
         } else {
             videoIdString += ',' + item
         }
     }
     requestVideoContentDetails(videoIdString)
-    currentToken = nextPageToken
 }
 
 // Load more videos when the user reaches the bottom of the page
