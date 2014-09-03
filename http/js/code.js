@@ -127,27 +127,33 @@ function createVideoBox(videoItem) {
 // Format a video's length into a human readable format
 function formatDurationTime(duration) {
 
-    var timeEx = /PT(?:(\d\d?)H)?(?:(\d\d?)M)?(\d\d?)S/
+    var timeRegex = /PT(?:(\d\d?)H)?(?:(\d\d?)M)?(?:(\d\d?)S)?/
 
-    match = timeEx.exec(duration)
+    console.log(duration)
+    match = timeRegex.exec(duration)
     match = match.slice(1)
-    for (i in match) {
-        n = match[i]
-        if (n != undefined && n.length < 2) {
-            match[i] += '0'
-        }
-    }
 
     var textDuration = ''
+
     if (match[0] != undefined) {
         textDuration += match[0] + ':'
     }
     if (match[1] != undefined) {
+        if (match[1].length < 2 and match[0] != undefined) {
+            textDuration += '0'
+        }
         textDuration += match[1] + ':'
     } else {
-        textDuration += '0:'
+        textDuration += '0' + ':'
     }
-    textDuration += match[2]
+    if (match[2] != undefined) {
+        if (match[2].length < 2) {
+            textDuration += '0'
+        }
+        textDuration += match[2]
+    } else {
+        textDuration += '00'
+    }
 
     return textDuration
 }
