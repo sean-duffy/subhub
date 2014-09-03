@@ -3,9 +3,9 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/coopernurse/gorp"
@@ -20,12 +20,8 @@ var (
 )
 
 func serveUploads(w http.ResponseWriter, r *http.Request) {
-	pathSplit := strings.Split(r.URL.String(), "/")
-	if len(pathSplit) < 3 {
-		http.Error(w, "404: Page not found", http.StatusNotFound)
-		return
-	}
-	channelId := pathSplit[2]
+	vars := mux.Vars(r)
+	channelId := vars["channelId"]
 
 	w.Header().Add("Content-Type", "text/html")
 
@@ -37,9 +33,17 @@ func serveUploads(w http.ResponseWriter, r *http.Request) {
 
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
 
-	uploads, err := dbmap.Select(core.Video{}, "select * from videos where ChannelId=? order by PublishedAt desc", channelId)
+	query := "select * from videos %s'%s' order by PublishedAt desc"
+
+	if channelId == "all" {
+		query = fmt.Sprintf(query, "", "")
+	} else {
+		query = fmt.Sprintf(query, "where ChannelId=", channelId)
+	}
+
+	uploads, err := dbmap.Select(core.Video{}, query, channelId)
 	if err != nil {
-		http.Error(w, "500: Database error", http.StatusInternalServerError)
+		http.Error(w, "404: Page not found", http.StatusInternalServerError)
 		return
 	}
 
@@ -66,7 +70,7 @@ func main() {
 	mux.PathPrefix("/fonts").Handler(staticContent)
 	mux.Path("/").Handler(staticContent)
 
-	mux.PathPrefix("/uploads").HandlerFunc(serveUploads)
+	mux.Path("/uploads/{channelId:.{24}|all}").HandlerFunc(serveUploads)
 
 	graceful.Run(":"+listenPort, 10*time.Second, mux)
 }

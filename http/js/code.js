@@ -1,10 +1,10 @@
 // Some variables to remember state.
 var currentChannelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
+var videoIdList = []
 var topTenList
 
 function handleAPILoaded() {
     requestUserSubscriptionsList()
-    scrollInterval = setInterval(infiniteScroll, 500)
 }
 
 // Retrieve the users subscriptions
@@ -37,34 +37,27 @@ function requestUserSubscriptionsList(pageToken) {
 function requestUploads(channelId) {
     $.get("uploads/" + channelId, function(data) {
         uploads = JSON.parse(data)
-        videoIdList = ""
         $.each(uploads, function(index, video) {
-            videoIdList += "," + video.Id
+            videoIdList.push(video.Id)
         })
-        console.log(videoIdList)
-        requestVideoContentDetails(videoIdList)
     })
 }
 
 // Get the details of a list of videos
-function requestVideoContentDetails(videoIdList) {
+function requestVideoContentDetails(videoIdString) {
     var requestOptions = {
-        id: videoIdList,
+        id: videoIdString,
         part: 'snippet,contentDetails'
     }
 
     var request = gapi.client.youtube.videos.list(requestOptions)
     request.execute(function(response) {
         var videoItems = response.items
-
         var itemRow = []
         $.each(videoItems, function(index, item) {
-
             itemRow.push(item)
-
             if (index % 4 == 3 || item == videoItems[videoItems.length - 1]) {
                 createThumbnailRow(itemRow)
-                itemRow = []
             }
         })
     })
@@ -134,27 +127,32 @@ function createVideoBox(videoItem) {
 // Format a video's length into a human readable format
 function formatDurationTime(duration) {
 
-    var timeEx = /PT(?:(\d\d?)H)?(?:(\d\d?)M)?(\d\d?)S/
+    var timeRegex = /PT(?:(\d\d?)H)?(?:(\d\d?)M)?(?:(\d\d?)S)?/
 
-    match = timeEx.exec(duration)
+    match = timeRegex.exec(duration)
     match = match.slice(1)
-    for (i in match) {
-        n = match[i]
-        if (n != undefined && n.length < 2) {
-            match[i] += '0'
-        }
-    }
 
     var textDuration = ''
+
     if (match[0] != undefined) {
         textDuration += match[0] + ':'
     }
     if (match[1] != undefined) {
+        if (match[1].length < 2 && match[0] != undefined) {
+            textDuration += '0'
+        }
         textDuration += match[1] + ':'
     } else {
-        textDuration += '0:'
+        textDuration += '0' + ':'
     }
-    textDuration += match[2]
+    if (match[2] != undefined) {
+        if (match[2].length < 2) {
+            textDuration += '0'
+        }
+        textDuration += match[2]
+    } else {
+        textDuration += '00'
+    }
 
     return textDuration
 }
@@ -198,18 +196,34 @@ function populateQuickSearch(subscriptionListItems) {
         button.append($('<span class="caret"></span>'))
         $('.typeahead').typeahead('setQuery', '')
 
+        videoIdList = []
         requestUploads(currentChannelId)
         scrollInterval = setInterval(infiniteScroll, 500)
     })
 
+    $('.dropdown-menu #all-channels').click(function() {
+        $('#videoContainer').empty()
+        videoIdList = []
+        requestUploads('all')
+        scrollInterval = setInterval(infiniteScroll, 500)
+    })
+
+    $('.dropdown-menu #all-channels').click()
 }
 
 // Load the next page of videos
 function nextPage() {
-    if (currentToken != nextPageToken) {
-        requestVideoPlaylist(playlistId, nextPageToken)
+    var videoIdString = ""
+    for (var i = 0; i < 4; i++) {
+        item = videoIdList.shift()
+        if (item == undefined) {
+            break
+            clearInterval(scrollInterval)
+        } else {
+            videoIdString += ',' + item
+        }
     }
-    currentToken = nextPageToken
+    requestVideoContentDetails(videoIdString)
 }
 
 // Load more videos when the user reaches the bottom of the page
@@ -225,7 +239,7 @@ function infiniteScroll() {
     var totalHeight = document.body.offsetHeight
     var visibleHeight = document.documentElement.clientHeight
 
-    if (totalHeight <= currentScroll + visibleHeight && nextPageToken) {
+    if (totalHeight <= currentScroll + visibleHeight + totalHeight * 0.1) {
         nextPage()
     }
 }
