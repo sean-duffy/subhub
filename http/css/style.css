@@ -25,6 +25,7 @@
 
 .videoBox {
     padding-bottom: 10px;
+    height: 215px;
 }
 
 .videoRow, .loading {
