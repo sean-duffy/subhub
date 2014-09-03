@@ -23,13 +23,16 @@
     float: right;
 }
 
-.videoBox {
-    padding-bottom: 10px;
-    height: 215px;
+.videoBox p {
+    margin-bottom: 5px;
 }
 
-.videoRow, .loading {
-    margin: 20px 0 0 0;
+#videoContainer {
+    padding: 10px 0;
+}
+
+.videoBox {
+    border: none;
 }
 
 #channelSelector {
