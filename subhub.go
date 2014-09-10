@@ -1,14 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/coopernurse/gorp"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sean-duffy/subhub/core"
@@ -20,18 +17,15 @@ var (
 )
 
 func presentVideoQueryResults(w http.ResponseWriter, query string, args ...interface{}) {
-	db, err := sql.Open("sqlite3", os.ExpandEnv("db.sqlite"))
+	dbmap, err := core.InitDb()
 	if err != nil {
 		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
-		return
 	}
-
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
+	defer dbmap.Db.Close()
 
 	uploads, err := dbmap.Select(core.Video{}, query, args...)
 	if err != nil {
 		http.Error(w, "404: Page not found", http.StatusInternalServerError)
-		fmt.Printf("%v\n", err)
 		return
 	}
 
