@@ -200,6 +200,19 @@ function populateQuickSearch(subscriptionListItems) {
         scrollInterval = setInterval(infiniteScroll, 500)
     })
 
+    $('#newSeriesTracker').click(function() {
+        $('#seriesTrackerModal').modal()
+    })
+
+    $('#createTracker').click(function() {
+        $.post('/addtracker', {
+            trackerName: $('#trackerName').val(),
+            seriesString: $('#seriesString').val(),
+            channelId: currentChannelId
+        })
+        $('#seriesTrackerModal').modal('hide')
+    })
+
     $('.dropdown-menu #all-channels').click(function() {
         $('#videoContainer').empty()
         videoIdList = []
