@@ -3,6 +3,7 @@ var currentChannelId, playlistId, nextPageToken, currentToken, scrollInterval, s
 var videoIdList = []
 var topTenList
 
+// This is run when authorisation is complete
 function handleAPILoaded() {
     requestUserSubscriptionsList()
 }
@@ -34,6 +35,7 @@ function requestUserSubscriptionsList(pageToken) {
     })
 }
 
+// Send the API request to get uploads
 function requestUploads(channelId) {
     $.get("uploads/" + channelId, function(data) {
         uploads = JSON.parse(data)
@@ -49,6 +51,12 @@ function requestVideoContentDetails(videoIdString) {
         id: videoIdString,
         part: 'snippet,contentDetails'
     }
+
+    // Add the row loading indicator
+    var loadingRow = $('<div>')
+    loadingRow.addClass('row loading')
+    loadingRow.append('<img src="img/loader.gif">')
+    $('#videoContainer').append(loadingRow)
 
     var request = gapi.client.youtube.videos.list(requestOptions)
     request.execute(function(response) {
@@ -66,6 +74,7 @@ function requestVideoContentDetails(videoIdString) {
 // Render the thumbnails for a list of videos
 function createThumbnailRow(videoItems) {
     var thumbnailRow = $('<div>')
+    thumbnailRow.hide()
     thumbnailRow.addClass('row videoRow')
 
     jQuery.each(videoItems, function(index, item) {
@@ -75,6 +84,7 @@ function createThumbnailRow(videoItems) {
 
     $('.row .loading').remove()
     $('#videoContainer').append(thumbnailRow)
+    thumbnailRow.fadeIn()
 }
 
 // Create a box for a video
@@ -157,10 +167,6 @@ function formatDurationTime(duration) {
     return textDuration
 }
 
-function populateChannelDropdown(subscriptionListItems) {
-
-}
-
 // Populate the quick search box with channels
 function populateQuickSearch(subscriptionListItems) {
 
@@ -209,21 +215,24 @@ function populateQuickSearch(subscriptionListItems) {
     })
 
     $('.dropdown-menu #all-channels').click()
+    $('#controlRow').show()
 }
 
 // Load the next page of videos
 function nextPage() {
-    var videoIdString = ""
-    for (var i = 0; i < 4; i++) {
-        item = videoIdList.shift()
-        if (item == undefined) {
-            break
-            clearInterval(scrollInterval)
-        } else {
-            videoIdString += ',' + item
+    if (videoIdList.length > 0) {
+        var videoIdString = ""
+        for (var i = 0; i < 4; i++) {
+            item = videoIdList.shift()
+            if (item == undefined) {
+                break
+                clearInterval(scrollInterval)
+            } else {
+                videoIdString += ',' + item
+            }
         }
+        requestVideoContentDetails(videoIdString)
     }
-    requestVideoContentDetails(videoIdString)
 }
 
 // Load more videos when the user reaches the bottom of the page

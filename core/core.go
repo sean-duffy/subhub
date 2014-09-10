@@ -14,16 +14,35 @@ import (
 // UserSubscriptionIds returns a list of the IDs for the user's subscribed
 // channels. The maximum number of channels returned is specified by maxResults.
 func UserSubscriptionIds(service *youtube.Service, maxResults int64) ([]string, error) {
-	call := service.Subscriptions.List("snippet").Mine(true).MaxResults(maxResults)
+	var pageMaxResults int64
+	var nextPageToken string
 
-	response, err := call.Do()
-	if err != nil {
-		return nil, err
-	}
-
+	baseCall := service.Subscriptions.List("snippet").Mine(true)
 	channelIds := []string{}
-	for _, subscription := range response.Items {
-		channelIds = append(channelIds, subscription.Snippet.ResourceId.ChannelId)
+	firstPage := true
+
+	for (nextPageToken != "" || firstPage) && maxResults > 0 {
+		if maxResults > 50 {
+			pageMaxResults = 50
+		} else {
+			pageMaxResults = maxResults
+		}
+		maxResults -= pageMaxResults
+
+		call := baseCall.MaxResults(pageMaxResults).PageToken(nextPageToken)
+
+		response, err := call.Do()
+		if err != nil {
+			return nil, err
+		}
+
+		nextPageToken = response.NextPageToken
+
+		for _, subscription := range response.Items {
+			channelIds = append(channelIds, subscription.Snippet.ResourceId.ChannelId)
+		}
+
+		firstPage = false
 	}
 
 	return channelIds, nil
@@ -67,7 +86,6 @@ func PlaylistVideoIds(service *youtube.Service, playlistId string, maxResults in
 			return []string{}, err
 		}
 
-		//log.Printf("%v\n", response.Items[0].Snippet.ChannelTitle)
 		nextPageToken = response.NextPageToken
 
 		for _, playlistItem := range response.Items {
@@ -102,30 +120,50 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 
 	playlistId := channel.ContentDetails.RelatedPlaylists.Uploads
 
-	videoIds, err := PlaylistVideoIds(service, playlistId, 100)
+	log.Println("Getting video IDs for", channel.Snippet.Title)
+
+	videoIds, err := PlaylistVideoIds(service, playlistId, 3000)
 	if err != nil {
 		log.Fatalf("Could not get video IDs from playlist: %v", err)
 	}
 
-	log.Println("Getting videos for", channel.Snippet.Title)
+	log.Println("Getting video details for", channel.Snippet.Title)
+
+	var currentChannelStored int64
+	var count int64
+	var inserted int64
 
 	for _, videoId := range videoIds {
-		video, err := VideoSnippet(service, videoId)
+		count, err = dbmap.SelectInt("select count(*) from videos where Id=?", videoId)
 		if err != nil {
 			return err
 		}
-
-		publishedAt, err := time.Parse(time.RFC3339Nano, video.Snippet.PublishedAt)
-		if err != nil {
-			return err
-		}
-
-		videoRecord := Video{video.Id, video.Snippet.ChannelId, publishedAt}
-		count, err := dbmap.SelectInt("select count(*) from videos where Id=?", video.Id)
 		if count == 0 {
+			video, err := VideoSnippet(service, videoId)
+			if err != nil {
+				return err
+			}
+
+			publishedAt, err := time.Parse(time.RFC3339Nano, video.Snippet.PublishedAt)
+			if err != nil {
+				return err
+			}
+
+			videoRecord := Video{video.Id, video.Snippet.ChannelId, publishedAt}
 			err = dbmap.Insert(&videoRecord)
 			if err != nil {
 				return err
+			}
+
+			inserted += 1
+
+			currentChannelStored, err = dbmap.SelectInt("select Stored from channels where Id=?", channelId)
+			if err != nil {
+				return err
+			}
+
+			if uint64(currentChannelStored) == channel.Statistics.VideoCount {
+				break
 			}
 		}
 	}
@@ -135,10 +173,10 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 		return err
 	}
 
-	log.Printf("Saved %v videos", stored)
+	log.Printf("Saved %v videos", inserted)
 
 	channelRecord := Channel{channel.Id, channel.Snippet.Title, channel.Statistics.VideoCount, uint64(stored), time.Now()}
-	count, err := dbmap.SelectInt("select count(*) from channels where Id=?", channel.Id)
+	count, err = dbmap.SelectInt("select count(*) from channels where Id=?", channel.Id)
 	if count == 0 {
 		err = dbmap.Insert(&channelRecord)
 		if err != nil {
@@ -206,7 +244,10 @@ func GetData() {
 	}
 	defer dbmap.Db.Close()
 
-	userSubscriptionIds, err := UserSubscriptionIds(service, 5)
+	userSubscriptionIds, err := UserSubscriptionIds(service, 3000)
+	if err != nil {
+		log.Fatalf("Could not get user subscriptions: %v", err)
+	}
 
 	for _, channelId := range userSubscriptionIds {
 		err = saveUploads(dbmap, service, channelId)
