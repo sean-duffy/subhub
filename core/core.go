@@ -149,7 +149,7 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 				return err
 			}
 
-			videoRecord := Video{video.Id, video.Snippet.ChannelId, publishedAt}
+			videoRecord := Video{video.Id, video.Snippet.Title, video.Snippet.ChannelId, publishedAt}
 			err = dbmap.Insert(&videoRecord)
 			if err != nil {
 				return err
@@ -195,6 +195,7 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 // Video is the database model for videos
 type Video struct {
 	Id          string
+	Title       string
 	ChannelId   string
 	PublishedAt time.Time
 }
