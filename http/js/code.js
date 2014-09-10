@@ -52,12 +52,6 @@ function requestVideoContentDetails(videoIdString) {
         part: 'snippet,contentDetails'
     }
 
-    // Add the row loading indicator
-    var loadingRow = $('<div>')
-    loadingRow.addClass('row loading')
-    loadingRow.append('<img src="img/loader.gif">')
-    $('#videoContainer').append(loadingRow)
-
     var request = gapi.client.youtube.videos.list(requestOptions)
     request.execute(function(response) {
         var videoItems = response.items
@@ -82,7 +76,6 @@ function createThumbnailRow(videoItems) {
         thumbnailRow.append(videoBox)
     })
 
-    $('.row .loading').remove()
     $('#videoContainer').append(thumbnailRow)
     thumbnailRow.fadeIn()
 }
