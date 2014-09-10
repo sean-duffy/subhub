@@ -14,16 +14,35 @@ import (
 // UserSubscriptionIds returns a list of the IDs for the user's subscribed
 // channels. The maximum number of channels returned is specified by maxResults.
 func UserSubscriptionIds(service *youtube.Service, maxResults int64) ([]string, error) {
-	call := service.Subscriptions.List("snippet").Mine(true).MaxResults(maxResults)
+	var pageMaxResults int64
+	var nextPageToken string
 
-	response, err := call.Do()
-	if err != nil {
-		return nil, err
-	}
-
+	baseCall := service.Subscriptions.List("snippet").Mine(true)
 	channelIds := []string{}
-	for _, subscription := range response.Items {
-		channelIds = append(channelIds, subscription.Snippet.ResourceId.ChannelId)
+	firstPage := true
+
+	for (nextPageToken != "" || firstPage) && maxResults > 0 {
+		if maxResults > 50 {
+			pageMaxResults = 50
+		} else {
+			pageMaxResults = maxResults
+		}
+		maxResults -= pageMaxResults
+
+		call := baseCall.MaxResults(pageMaxResults).PageToken(nextPageToken)
+
+		response, err := call.Do()
+		if err != nil {
+			return nil, err
+		}
+
+		nextPageToken = response.NextPageToken
+
+		for _, subscription := range response.Items {
+			channelIds = append(channelIds, subscription.Snippet.ResourceId.ChannelId)
+		}
+
+		firstPage = false
 	}
 
 	return channelIds, nil
