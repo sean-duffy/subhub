@@ -120,12 +120,17 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 
 	playlistId := channel.ContentDetails.RelatedPlaylists.Uploads
 
+	log.Println("Getting video IDs for", channel.Snippet.Title)
+
 	videoIds, err := PlaylistVideoIds(service, playlistId, 3000)
 	if err != nil {
 		log.Fatalf("Could not get video IDs from playlist: %v", err)
 	}
 
-	log.Println("Getting videos for", channel.Snippet.Title)
+	log.Println("Getting video details for", channel.Snippet.Title)
+
+	var currentChannelStored int64
+	var count int64
 
 	for _, videoId := range videoIds {
 		video, err := VideoSnippet(service, videoId)
