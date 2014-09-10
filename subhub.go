@@ -58,8 +58,34 @@ func serveUploads(w http.ResponseWriter, r *http.Request) {
 	presentVideoQueryResults(w, query, channelId)
 }
 
+func addSeriesTracker(w http.ResponseWriter, r *http.Request) {
+	dbmap, err := core.InitDb()
+	if err != nil {
+		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
+	}
+	defer dbmap.Db.Close()
+
+	r.ParseForm()
+
+	channelId := r.Form["channelId"][0]
+	trackerName := r.Form["trackerName"][0]
+	seriesString := r.Form["seriesString"][0]
+
+	newTracker := core.Tracker{
+		Name:         trackerName,
+		SeriesString: seriesString,
+		ChannelId:    channelId,
+	}
+
+	err = dbmap.Insert(&newTracker)
+	if err != nil {
+		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
+	}
+}
+
 func serveSeries(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	trackerId := vars["channelId"]
 	channelId := vars["channelId"]
 	seriesString := vars["seriesString"]
 
@@ -77,14 +103,15 @@ func main() {
 
 	staticContent := http.FileServer(http.Dir("http"))
 
-	mux.PathPrefix("/js").Handler(staticContent)
-	mux.PathPrefix("/css").Handler(staticContent)
-	mux.PathPrefix("/img").Handler(staticContent)
-	mux.PathPrefix("/fonts").Handler(staticContent)
+	mux.PathPrefix("/js/{_}").Handler(staticContent)
+	mux.PathPrefix("/css/{_}").Handler(staticContent)
+	mux.PathPrefix("/img/{_}").Handler(staticContent)
+	mux.PathPrefix("/fonts/{_}").Handler(staticContent)
 	mux.Path("/").Handler(staticContent)
 
 	mux.Path("/uploads/{channelId:.{24}|all}").HandlerFunc(serveUploads)
-	mux.Path("/series/{channelId:.{24}}/{seriesString}").HandlerFunc(serveSeries)
+	mux.Path("/addtracker").HandlerFunc(addSeriesTracker)
+	mux.Path("/series/{trackerId}").HandlerFunc(serveSeries)
 
 	graceful.Run(":"+listenPort, 10*time.Second, mux)
 }
