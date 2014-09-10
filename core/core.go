@@ -224,7 +224,10 @@ func GetData() {
 	}
 	defer dbmap.Db.Close()
 
-	userSubscriptionIds, err := UserSubscriptionIds(service, 5)
+	userSubscriptionIds, err := UserSubscriptionIds(service, 3000)
+	if err != nil {
+		log.Fatalf("Could not get user subscriptions: %v", err)
+	}
 
 	for _, channelId := range userSubscriptionIds {
 		err = saveUploads(dbmap, service, channelId)
