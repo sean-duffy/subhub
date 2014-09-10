@@ -67,7 +67,6 @@ func PlaylistVideoIds(service *youtube.Service, playlistId string, maxResults in
 			return []string{}, err
 		}
 
-		//log.Printf("%v\n", response.Items[0].Snippet.ChannelTitle)
 		nextPageToken = response.NextPageToken
 
 		for _, playlistItem := range response.Items {
