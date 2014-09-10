@@ -159,10 +159,6 @@ function formatDurationTime(duration) {
     return textDuration
 }
 
-function populateChannelDropdown(subscriptionListItems) {
-
-}
-
 // Populate the quick search box with channels
 function populateQuickSearch(subscriptionListItems) {
 
