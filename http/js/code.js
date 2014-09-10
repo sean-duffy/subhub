@@ -3,6 +3,7 @@ var currentChannelId, playlistId, nextPageToken, currentToken, scrollInterval, s
 var videoIdList = []
 var topTenList
 
+// This is run when authorisation is complete
 function handleAPILoaded() {
     requestUserSubscriptionsList()
 }
@@ -34,6 +35,7 @@ function requestUserSubscriptionsList(pageToken) {
     })
 }
 
+// Send the API request to get uploads
 function requestUploads(channelId) {
     $.get("uploads/" + channelId, function(data) {
         uploads = JSON.parse(data)
