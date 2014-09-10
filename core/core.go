@@ -131,6 +131,7 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 
 	var currentChannelStored int64
 	var count int64
+	var inserted int64
 
 	for _, videoId := range videoIds {
 		count, err = dbmap.SelectInt("select count(*) from videos where Id=?", videoId)
@@ -154,6 +155,8 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 				return err
 			}
 
+			inserted += 1
+
 			currentChannelStored, err = dbmap.SelectInt("select Stored from channels where Id=?", channelId)
 			if err != nil {
 				return err
@@ -170,7 +173,7 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 		return err
 	}
 
-	log.Printf("Saved %v videos", stored)
+	log.Printf("Saved %v videos", inserted)
 
 	channelRecord := Channel{channel.Id, channel.Snippet.Title, channel.Statistics.VideoCount, uint64(stored), time.Now()}
 	count, err = dbmap.SelectInt("select count(*) from channels where Id=?", channel.Id)
