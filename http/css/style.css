@@ -65,3 +65,15 @@ a {
 #controlRow {
     margin: 10px 0 0 0;
 }
+
+#mainLoader {
+    margin: 25% auto;
+    width: 220px;
+}
+
+#mainLoader p {
+    margin: 3px;
+    text-align: center;
+    color: #bbb;
+
+}

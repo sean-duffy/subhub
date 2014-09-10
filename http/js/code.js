@@ -74,6 +74,7 @@ function requestVideoContentDetails(videoIdString) {
 // Render the thumbnails for a list of videos
 function createThumbnailRow(videoItems) {
     var thumbnailRow = $('<div>')
+    thumbnailRow.hide()
     thumbnailRow.addClass('row videoRow')
 
     jQuery.each(videoItems, function(index, item) {
@@ -83,6 +84,7 @@ function createThumbnailRow(videoItems) {
 
     $('.row .loading').remove()
     $('#videoContainer').append(thumbnailRow)
+    thumbnailRow.fadeIn()
 }
 
 // Create a box for a video
@@ -213,21 +215,24 @@ function populateQuickSearch(subscriptionListItems) {
     })
 
     $('.dropdown-menu #all-channels').click()
+    $('#controlRow').show()
 }
 
 // Load the next page of videos
 function nextPage() {
-    var videoIdString = ""
-    for (var i = 0; i < 4; i++) {
-        item = videoIdList.shift()
-        if (item == undefined) {
-            break
-            clearInterval(scrollInterval)
-        } else {
-            videoIdString += ',' + item
+    if (videoIdList.length > 0) {
+        var videoIdString = ""
+        for (var i = 0; i < 4; i++) {
+            item = videoIdList.shift()
+            if (item == undefined) {
+                break
+                clearInterval(scrollInterval)
+            } else {
+                videoIdString += ',' + item
+            }
         }
+        requestVideoContentDetails(videoIdString)
     }
-    requestVideoContentDetails(videoIdString)
 }
 
 // Load more videos when the user reaches the bottom of the page
