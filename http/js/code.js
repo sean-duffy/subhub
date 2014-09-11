@@ -241,8 +241,15 @@ function populateQuickSearch(subscriptionListItems) {
             seriesString: $('#seriesString').val(),
             channelId: currentChannelId
         })
+        $('#trackerName').val('')
+        $('#seriesString').val('')
         $('#seriesTrackerModal').modal('hide')
         populateSeriesTrackers()
+    })
+
+    $('#seriesTrackerModal').on('hidden.bs.modal', function() {
+        $('#trackerName').val('')
+        $('#seriesString').val('')
     })
 
     $('.dropdown-menu #all-channels').click(function() {
