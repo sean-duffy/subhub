@@ -68,6 +68,16 @@ function requestUploads(channelId) {
     })
 }
 
+// Send the API request to get the uploads for this series tracker
+function requestSeries(trackerId) {
+    $.get("series/" + trackerId, function(data) {
+        uploads = JSON.parse(data)
+        $.each(uploads, function(index, video) {
+            videoIdList.push(video.Id)
+        })
+    })
+}
+
 // Get the details of a list of videos
 function requestVideoContentDetails(videoIdString) {
     var requestOptions = {
@@ -234,11 +244,13 @@ function populateQuickSearch(subscriptionListItems) {
             channelId: currentChannelId
         })
         $('#seriesTrackerModal').modal('hide')
+        populateSeriesTrackers()
     })
 
     $('.dropdown-menu #all-channels').click(function() {
         $('#videoContainer').empty()
         videoIdList = []
+        currentChannelId = undefined
         requestUploads('all')
         scrollInterval = setInterval(infiniteScroll, 500)
     })

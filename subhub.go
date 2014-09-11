@@ -83,19 +83,63 @@ func addSeriesTracker(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func serveSeries(w http.ResponseWriter, r *http.Request) {
+func listSeriesTrackers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	trackerId := vars["channelId"]
 	channelId := vars["channelId"]
-	seriesString := vars["seriesString"]
 
 	w.Header().Add("Content-Type", "text/html")
 
-	seriesString = "%" + seriesString + "%"
+	dbmap, err := core.InitDb()
+	if err != nil {
+		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
+	}
+	defer dbmap.Db.Close()
 
-	query := "select * from videos where Title like ? and ChannelId=? order by PublishedAt desc"
+	query := "select * from trackers where ChannelId=?"
 
-	presentVideoQueryResults(w, query, seriesString, channelId)
+	trackers, err := dbmap.Select(core.Tracker{}, query, channelId)
+	if err != nil {
+		http.Error(w, "404: Page not found", http.StatusInternalServerError)
+		return
+	}
+
+	trackersJSON, err := json.Marshal(trackers)
+	if err != nil {
+		http.Error(w, "500: Error parsing database", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = w.Write(trackersJSON)
+	if err != nil {
+		http.Error(w, "500: Error writing response", http.StatusInternalServerError)
+	}
+}
+
+func serveSeries(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	trackerId := vars["trackerId"]
+
+	w.Header().Add("Content-Type", "text/html")
+
+	dbmap, err := core.InitDb()
+	if err != nil {
+		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
+	}
+	defer dbmap.Db.Close()
+
+	query := "select * from trackers where Id=?"
+
+	tracker := core.Tracker{}
+	err = dbmap.SelectOne(&tracker, query, trackerId)
+	if err != nil {
+		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
+	}
+
+	seriesString := "%" + tracker.SeriesString + "%"
+
+	query = "select * from videos where Title like ? and ChannelId=? order by PublishedAt desc"
+
+	presentVideoQueryResults(w, query, seriesString, tracker.ChannelId)
 }
 
 func main() {
@@ -110,6 +154,7 @@ func main() {
 	mux.Path("/").Handler(staticContent)
 
 	mux.Path("/uploads/{channelId:.{24}|all}").HandlerFunc(serveUploads)
+	mux.Path("/listtrackers/{channelId:.{24}}").HandlerFunc(listSeriesTrackers)
 	mux.Path("/addtracker").HandlerFunc(addSeriesTracker)
 	mux.Path("/series/{trackerId}").HandlerFunc(serveSeries)
 
