@@ -42,19 +42,41 @@ function populateSeriesTrackers() {
     if (currentChannelId != undefined) {
         $.get("listtrackers/" + currentChannelId, function(data) {
             trackers = JSON.parse(data)
+
             if (trackers.length > 0) {
                 $('#trackerList').prepend($("<li class='divider'></li>"))
             }
+
             $.each(trackers, function(index, tracker) {
                 var trackerItem = $('<li>')
-                var trackerAnchor = $('<a>').attr('data-id', tracker.Id).text(tracker.Name)
+                var nameSpan = $('<span>').text(tracker.Name).addClass('nameSpan')
+                var trackerAnchor = $('<a>').attr('data-id', tracker.Id).html(nameSpan)
+
                 trackerAnchor.click(function() {
                     videoIdList = []
                     requestSeries($(this).attr('data-id'))
                     $('#videoContainer').empty()
                 })
+
                 $('#trackerList').prepend(trackerItem.append(trackerAnchor))
+                trackerAnchor.prepend($("<span class='glyphicon glyphicon-pencil'></span>"))
             })
+
+            $('.glyphicon-pencil').hover(function() {
+                $(this).parent().css('color', '#333333')
+                $(this).parent().css('background-color', 'white')
+            }, function() {
+                $(this).parent().css('color', '')
+                $(this).parent().css('background-color', '')
+            })
+
+            $('.glyphicon-pencil').click(function() {
+                // TODO: Populate the form fields with a get request
+                $('#trackerName').val('')
+                $('#seriesString').val('')
+                $('#seriesTrackerModal').modal()
+            })
+
         })
     }
 }
