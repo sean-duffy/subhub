@@ -30,7 +30,7 @@ function requestUserSubscriptionsList(pageToken) {
         if (subscriptionPageToken) {
             requestUserSubscriptionsList(subscriptionPageToken)
         } else {
-            populateQuickSearch(subscriptionListItems)
+            populateChannelSearch(subscriptionListItems)
         }
     })
 }
@@ -196,7 +196,7 @@ function formatDurationTime(duration) {
 }
 
 // Populate the quick search box with channels
-function populateQuickSearch(subscriptionListItems) {
+function populateChannelSearch(subscriptionListItems) {
 
     var channelDatums = []
 
