@@ -35,8 +35,31 @@ function requestUserSubscriptionsList(pageToken) {
     })
 }
 
+// Populate the Series Trackers menu
+function populateSeriesTrackers() {
+    $('#trackerList').empty()
+    $('#trackerList').html($("<li class='divider'></li>"))
+    $('#trackerList').append($("<li><a id='newSeriesTracker'><span class='glyphicon glyphicon-plus'></span> New Tracker</a></li>"))
+    if (currentChannelId != undefined) {
+        $.get("listtrackers/" + currentChannelId, function(data) {
+            trackers = JSON.parse(data)
+            $.each(trackers, function(index, tracker) {
+                var trackerItem = $('<li>')
+                var trackerAnchor = $('<a>').attr('data-id', tracker.Id).text(tracker.Name)
+                trackerAnchor.click(function() {
+                    videoIdList = []
+                    requestSeries($(this).attr('data-id'))
+                    $('#videoContainer').empty()
+                })
+                $('#trackerList').prepend(trackerItem.append(trackerAnchor))
+            })
+        })
+    }
+}
+
 // Send the API request to get uploads
 function requestUploads(channelId) {
+    populateSeriesTrackers()
     $.get("uploads/" + channelId, function(data) {
         uploads = JSON.parse(data)
         $.each(uploads, function(index, video) {
