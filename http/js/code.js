@@ -38,9 +38,13 @@ function requestUserSubscriptionsList(pageToken) {
 // Populate the Series Trackers menu
 function populateSeriesTrackers() {
     $('a[data-id]').parent().remove()
+    $('#trackerList .divider').remove()
     if (currentChannelId != undefined) {
         $.get("listtrackers/" + currentChannelId, function(data) {
             trackers = JSON.parse(data)
+            if (trackers.length > 0) {
+                $('#trackerList').prepend($("<li class='divider'></li>"))
+            }
             $.each(trackers, function(index, tracker) {
                 var trackerItem = $('<li>')
                 var trackerAnchor = $('<a>').attr('data-id', tracker.Id).text(tracker.Name)
