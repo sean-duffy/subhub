@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -70,6 +71,7 @@ func addSeriesTracker(w http.ResponseWriter, r *http.Request) {
 	channelId := r.Form["channelId"][0]
 	trackerName := r.Form["trackerName"][0]
 	seriesString := r.Form["seriesString"][0]
+	trackerId := r.Form["trackerId"][0]
 
 	newTracker := core.Tracker{
 		Name:         trackerName,
@@ -77,7 +79,17 @@ func addSeriesTracker(w http.ResponseWriter, r *http.Request) {
 		ChannelId:    channelId,
 	}
 
-	err = dbmap.Insert(&newTracker)
+	if trackerId != "" {
+		trackerIdInt, err := strconv.Atoi(trackerId)
+		if err != nil {
+			http.Error(w, "500: Interval server error", http.StatusInternalServerError)
+		}
+		newTracker.Id = int64(trackerIdInt)
+		_, err = dbmap.Update(&newTracker)
+	} else {
+		err = dbmap.Insert(&newTracker)
+	}
+
 	if err != nil {
 		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
 	}

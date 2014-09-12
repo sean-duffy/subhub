@@ -2,6 +2,7 @@
 var currentChannelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
 var videoIdList = []
 var topTenList
+var editingTrackerId
 
 // This is run when authorisation is complete
 function handleAPILoaded() {
@@ -73,9 +74,18 @@ function populateSeriesTrackers() {
             $('#editTracker').click(function(e) {
                 e.stopPropagation()
                 // TODO: Populate the form fields with a get request
-                $('#trackerName').val('')
-                $('#seriesString').val('')
-                $('#seriesTrackerModal').modal()
+                var trackerId = $(this).parent().attr('data-id')
+                $.get("listtrackers/" + currentChannelId, function(data) {
+                    trackers = JSON.parse(data)
+                    $.each(trackers, function(index, tracker) {
+                        if (tracker['Id'] == trackerId) {
+                            $('#trackerName').val(tracker['Name'])
+                            $('#seriesString').val(tracker['SeriesString'])
+                            editingTrackerId = trackerId
+                            $('#seriesTrackerModal').modal()
+                        }
+                    })
+                })
             })
 
         })
@@ -263,10 +273,16 @@ function populateChannelSearch(subscriptionListItems) {
     })
 
     $('#createTracker').click(function() {
+        var trackerId = ''
+        if (editingTrackerId != undefined) {
+            trackerId = editingTrackerId
+            editingTrackerId = undefined
+        }
         $.post('/addtracker', {
             trackerName: $('#trackerName').val(),
             seriesString: $('#seriesString').val(),
-            channelId: currentChannelId
+            channelId: currentChannelId,
+            trackerId: trackerId
         })
         $('#trackerName').val('')
         $('#seriesString').val('')
