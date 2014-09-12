@@ -279,6 +279,10 @@ function populateChannelSearch(subscriptionListItems) {
     })
 
     $('.dropdown-menu #all-channels').click(function() {
+        var button = $('#channelSelector button')
+        button.empty()
+        button.append('All Channels ')
+        button.append($('<span class="caret"></span>'))
         $('#videoContainer').empty()
         videoIdList = []
         currentChannelId = undefined
