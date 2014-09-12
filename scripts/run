@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+cd ~/.local/src/github.com/sean-duffy/subhub/scripts/ && ./scripts 2> /tmp/subhub.log
