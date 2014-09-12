@@ -218,7 +218,7 @@ type Tracker struct {
 
 // InitDb opens the database and creates the videos table if necessary.
 func InitDb() (*gorp.DbMap, error) {
-	db, err := sql.Open("sqlite3", os.ExpandEnv("$GOPATH/src/github.com/sean-duffy/subhub/db.sqlite"))
+	db, err := sql.Open("sqlite3", os.ExpandEnv("/Users/SeanDuffy/.local/src/github.com/sean-duffy/subhub/db.sqlite"))
 	if err != nil {
 		return nil, err
 	}
