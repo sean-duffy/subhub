@@ -59,10 +59,10 @@ function populateSeriesTrackers() {
                 })
 
                 $('#trackerList').prepend(trackerItem.append(trackerAnchor))
-                trackerAnchor.prepend($("<span class='glyphicon glyphicon-pencil'></span>"))
+                trackerAnchor.prepend($("<span id='editTracker' class='glyphicon glyphicon-pencil'></span>"))
             })
 
-            $('.glyphicon-pencil').hover(function() {
+            $('#editTracker').hover(function() {
                 $(this).parent().css('color', '#333333')
                 $(this).parent().css('background-color', 'white')
             }, function() {
@@ -70,7 +70,8 @@ function populateSeriesTrackers() {
                 $(this).parent().css('background-color', '')
             })
 
-            $('.glyphicon-pencil').click(function() {
+            $('#editTracker').click(function(e) {
+                e.stopPropagation()
                 // TODO: Populate the form fields with a get request
                 $('#trackerName').val('')
                 $('#seriesString').val('')
