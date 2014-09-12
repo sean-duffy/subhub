@@ -293,6 +293,7 @@ function populateChannelSearch(subscriptionListItems) {
     $('#seriesTrackerModal').on('hidden.bs.modal', function() {
         $('#trackerName').val('')
         $('#seriesString').val('')
+        editingTrackerId = undefined
     })
 
     $('.dropdown-menu #all-channels').click(function() {
