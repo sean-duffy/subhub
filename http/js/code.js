@@ -284,8 +284,6 @@ function populateChannelSearch(subscriptionListItems) {
             channelId: currentChannelId,
             trackerId: trackerId
         })
-        $('#trackerName').val('')
-        $('#seriesString').val('')
         $('#seriesTrackerModal').modal('hide')
         populateSeriesTrackers()
     })
