@@ -73,7 +73,8 @@ function populateSeriesTrackers() {
 
             $('.editTracker').click(function(e) {
                 e.stopPropagation()
-                // TODO: Populate the form fields with a get request
+                deleteButton = "<button type='button' class='btn btn-danger' id='deleteTracker'>Delete Tracker</button>"
+                $('#createTracker').before($(deleteButton))
                 var trackerId = $(this).parent().attr('data-id')
                 $.get("listtrackers/" + currentChannelId, function(data) {
                     trackers = JSON.parse(data)
@@ -291,6 +292,7 @@ function populateChannelSearch(subscriptionListItems) {
     $('#seriesTrackerModal').on('hidden.bs.modal', function() {
         $('#trackerName').val('')
         $('#seriesString').val('')
+        $('#deleteTracker').remove()
         editingTrackerId = undefined
     })
 
