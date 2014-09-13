@@ -95,6 +95,31 @@ func addSeriesTracker(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func deleteSeriesTracker(w http.ResponseWriter, r *http.Request) {
+	dbmap, err := core.InitDb()
+	if err != nil {
+		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
+	}
+	defer dbmap.Db.Close()
+
+	r.ParseForm()
+	trackerId := r.Form["trackerId"][0]
+
+	trackerIdInt, err := strconv.Atoi(trackerId)
+	if err != nil {
+		http.Error(w, "500: Interval server error", http.StatusInternalServerError)
+	}
+
+	trackerToDelete := core.Tracker{
+		Id: int64(trackerIdInt),
+	}
+
+	_, err = dbmap.Delete(&trackerToDelete)
+	if err != nil {
+		http.Error(w, "500: Could not connect to database", http.StatusInternalServerError)
+	}
+}
+
 func listSeriesTrackers(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	channelId := vars["channelId"]
@@ -168,6 +193,7 @@ func main() {
 	mux.Path("/uploads/{channelId:.{24}|all}").HandlerFunc(serveUploads)
 	mux.Path("/listtrackers/{channelId:.{24}}").HandlerFunc(listSeriesTrackers)
 	mux.Path("/addtracker").HandlerFunc(addSeriesTracker)
+	mux.Path("/deletetracker").HandlerFunc(deleteSeriesTracker)
 	mux.Path("/series/{trackerId}").HandlerFunc(serveSeries)
 
 	graceful.Run(":"+listenPort, 10*time.Second, mux)

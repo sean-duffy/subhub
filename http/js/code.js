@@ -73,9 +73,19 @@ function populateSeriesTrackers() {
 
             $('.editTracker').click(function(e) {
                 e.stopPropagation()
+
                 deleteButton = "<button type='button' class='btn btn-danger' id='deleteTracker'>Delete Tracker</button>"
                 $('#createTracker').before($(deleteButton))
+                $('#deleteTracker').click(function() {
+                    $.post('/deletetracker', {
+                        trackerId: trackerId
+                    })
+                    $('#seriesTrackerModal').modal('hide')
+                    populateSeriesTrackers()
+                })
+
                 $('#createTracker').text('Update Tracker')
+
                 var trackerId = $(this).parent().attr('data-id')
                 $.get("listtrackers/" + currentChannelId, function(data) {
                     trackers = JSON.parse(data)
