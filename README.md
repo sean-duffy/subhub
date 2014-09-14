@@ -20,7 +20,7 @@ When subhub and its requirements are installed, to run the server do:
 
     ./subhub
 
-To update the database, which is necessary for up to date subscription data, do:
+This will host the webapp at ```http://127.0.0.1:8000```. To update the database, which is necessary for up to date subscription data, do:
 
     ./scripts/run
 
