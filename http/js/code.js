@@ -156,6 +156,11 @@ function createThumbnailRow(videoItems) {
         thumbnailRow.append(videoBox)
     })
 
+    $('.videoBox small a').click(function(e) {
+        e.preventDefault()
+        loadUploads($(this).attr('href'), $(this).text())
+    })
+
     $('#videoContainer').append(thumbnailRow)
     thumbnailRow.fadeIn()
 }
@@ -177,8 +182,7 @@ function createVideoBox(videoItem) {
     title.text(videoSnippet.title)
 
     var channelTitle = $('<a>')
-    // TODO: Replace # with channel URL
-    channelTitle.attr('href', '#')
+    channelTitle.attr('href', videoSnippet.channelId)
     channelTitle.text(videoSnippet.channelTitle)
     var titleSpan = $('<span>').html('by ')
     titleSpan.append(channelTitle)
@@ -240,6 +244,24 @@ function formatDurationTime(duration) {
     return textDuration
 }
 
+// Load the uploads for the specified channel
+function loadUploads(channelId, channelName) {
+    window.clearInterval(scrollInterval)
+
+    $('#videoContainer').empty()
+    currentChannelId = channelId
+
+    var button = $('#channelSelector button')
+    button.empty()
+    button.append(channelName + ' ')
+    button.append($('<span class="caret"></span>'))
+    $('.typeahead').typeahead('setQuery', '')
+
+    videoIdList = []
+    requestUploads(currentChannelId)
+    scrollInterval = setInterval(infiniteScroll, 500)
+}
+
 // Populate the quick search box with channels
 function populateChannelSearch(subscriptionListItems) {
 
@@ -262,22 +284,7 @@ function populateChannelSearch(subscriptionListItems) {
     })
 
     $(document).on('typeahead:selected', function(event, datum) {
-
-        window.clearInterval(scrollInterval)
-
-        $('#videoContainer').empty()
-        currentChannelId = datum.channelId
-
-        var channelName = datum.value
-        var button = $('#channelSelector button')
-        button.empty()
-        button.append(channelName + ' ')
-        button.append($('<span class="caret"></span>'))
-        $('.typeahead').typeahead('setQuery', '')
-
-        videoIdList = []
-        requestUploads(currentChannelId)
-        scrollInterval = setInterval(infiniteScroll, 500)
+        loadUploads(datum.channelId, datum.value)
     })
 
     $('#newSeriesTracker').click(function() {
