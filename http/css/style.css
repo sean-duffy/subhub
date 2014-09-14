@@ -35,10 +35,6 @@
     border: none;
 }
 
-#channelSelector {
-    margin-left: 15px;
-}
-
 a {
     cursor: pointer;
 }
@@ -48,7 +44,7 @@ a {
     padding: 70px 0 70px 0;
 }
 
-#quickSearch {
+#channelSearch {
     display: inline-block;
     margin-left: 15px;
     vertical-align: center;
@@ -76,4 +72,31 @@ a {
     text-align: center;
     color: #bbb;
 
+}
+
+#seriesSelector {
+    float: right;
+}
+
+.glyphicon-plus {
+    top: -1px;
+}
+
+.glyphicon-pencil {
+    top: -1px;
+    float: right;
+    padding: 2px 4px 6px 4px;
+}
+
+.glyphicon-pencil:hover {
+    color: #ffffff;
+    background-color: #428bca;
+}
+
+.dropdown-menu > li > a[data-id] {
+    padding-right: 12px;
+}
+
+.nameSpan {
+    margin-right: 30px;
 }

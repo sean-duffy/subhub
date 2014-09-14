@@ -2,6 +2,7 @@
 var currentChannelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
 var videoIdList = []
 var topTenList
+var editingTrackerId
 
 // This is run when authorisation is complete
 function handleAPILoaded() {
@@ -30,14 +31,93 @@ function requestUserSubscriptionsList(pageToken) {
         if (subscriptionPageToken) {
             requestUserSubscriptionsList(subscriptionPageToken)
         } else {
-            populateQuickSearch(subscriptionListItems)
+            populateChannelSearch(subscriptionListItems)
         }
     })
 }
 
+// Populate the Series Trackers menu
+function populateSeriesTrackers() {
+    $('a[data-id]').parent().remove()
+    $('#trackerList .divider').remove()
+    if (currentChannelId != undefined) {
+        $.get("listtrackers/" + currentChannelId, function(data) {
+            trackers = JSON.parse(data)
+
+            if (trackers.length > 0) {
+                $('#trackerList').prepend($("<li class='divider'></li>"))
+            }
+
+            $.each(trackers, function(index, tracker) {
+                var trackerItem = $('<li>')
+                var nameSpan = $('<span>').text(tracker.Name).addClass('nameSpan')
+                var trackerAnchor = $('<a>').attr('data-id', tracker.Id).html(nameSpan)
+
+                trackerAnchor.click(function() {
+                    videoIdList = []
+                    requestSeries($(this).attr('data-id'))
+                    $('#videoContainer').empty()
+                })
+
+                $('#trackerList').prepend(trackerItem.append(trackerAnchor))
+                trackerAnchor.prepend($("<span class='glyphicon glyphicon-pencil editTracker'></span>"))
+            })
+
+            $('.editTracker').hover(function() {
+                $(this).parent().css('color', '#333333')
+                $(this).parent().css('background-color', 'white')
+            }, function() {
+                $(this).parent().css('color', '')
+                $(this).parent().css('background-color', '')
+            })
+
+            $('.editTracker').click(function(e) {
+                e.stopPropagation()
+
+                deleteButton = "<button type='button' class='btn btn-danger' id='deleteTracker'>Delete Tracker</button>"
+                $('#createTracker').before($(deleteButton))
+                $('#deleteTracker').click(function() {
+                    $.post('/deletetracker', {
+                        trackerId: trackerId
+                    })
+                    $('#seriesTrackerModal').modal('hide')
+                    populateSeriesTrackers()
+                })
+
+                $('#createTracker').text('Update Tracker')
+
+                var trackerId = $(this).parent().attr('data-id')
+                $.get("listtrackers/" + currentChannelId, function(data) {
+                    trackers = JSON.parse(data)
+                    $.each(trackers, function(index, tracker) {
+                        if (tracker['Id'] == trackerId) {
+                            $('#trackerName').val(tracker['Name'])
+                            $('#seriesString').val(tracker['SeriesString'])
+                            editingTrackerId = trackerId
+                            $('#seriesTrackerModal').modal()
+                        }
+                    })
+                })
+            })
+
+        })
+    }
+}
+
 // Send the API request to get uploads
 function requestUploads(channelId) {
+    populateSeriesTrackers()
     $.get("uploads/" + channelId, function(data) {
+        uploads = JSON.parse(data)
+        $.each(uploads, function(index, video) {
+            videoIdList.push(video.Id)
+        })
+    })
+}
+
+// Send the API request to get the uploads for this series tracker
+function requestSeries(trackerId) {
+    $.get("series/" + trackerId, function(data) {
         uploads = JSON.parse(data)
         $.each(uploads, function(index, video) {
             videoIdList.push(video.Id)
@@ -51,12 +131,6 @@ function requestVideoContentDetails(videoIdString) {
         id: videoIdString,
         part: 'snippet,contentDetails'
     }
-
-    // Add the row loading indicator
-    var loadingRow = $('<div>')
-    loadingRow.addClass('row loading')
-    loadingRow.append('<img src="img/loader.gif">')
-    $('#videoContainer').append(loadingRow)
 
     var request = gapi.client.youtube.videos.list(requestOptions)
     request.execute(function(response) {
@@ -82,7 +156,6 @@ function createThumbnailRow(videoItems) {
         thumbnailRow.append(videoBox)
     })
 
-    $('.row .loading').remove()
     $('#videoContainer').append(thumbnailRow)
     thumbnailRow.fadeIn()
 }
@@ -168,7 +241,7 @@ function formatDurationTime(duration) {
 }
 
 // Populate the quick search box with channels
-function populateQuickSearch(subscriptionListItems) {
+function populateChannelSearch(subscriptionListItems) {
 
     var channelDatums = []
 
@@ -207,9 +280,42 @@ function populateQuickSearch(subscriptionListItems) {
         scrollInterval = setInterval(infiniteScroll, 500)
     })
 
+    $('#newSeriesTracker').click(function() {
+        $('#seriesTrackerModal').modal()
+    })
+
+    $('#createTracker').click(function() {
+        var trackerId = ''
+        if (editingTrackerId != undefined) {
+            trackerId = editingTrackerId
+            editingTrackerId = undefined
+        }
+        $.post('/addtracker', {
+            trackerName: $('#trackerName').val(),
+            seriesString: $('#seriesString').val(),
+            channelId: currentChannelId,
+            trackerId: trackerId
+        })
+        $('#seriesTrackerModal').modal('hide')
+        populateSeriesTrackers()
+    })
+
+    $('#seriesTrackerModal').on('hidden.bs.modal', function() {
+        $('#trackerName').val('')
+        $('#seriesString').val('')
+        $('#deleteTracker').remove()
+        $('#createTracker').text('Create Tracker')
+        editingTrackerId = undefined
+    })
+
     $('.dropdown-menu #all-channels').click(function() {
+        var button = $('#channelSelector button')
+        button.empty()
+        button.append('All Channels ')
+        button.append($('<span class="caret"></span>'))
         $('#videoContainer').empty()
         videoIdList = []
+        currentChannelId = undefined
         requestUploads('all')
         scrollInterval = setInterval(infiniteScroll, 500)
     })

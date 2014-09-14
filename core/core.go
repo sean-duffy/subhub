@@ -149,7 +149,7 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 				return err
 			}
 
-			videoRecord := Video{video.Id, video.Snippet.ChannelId, publishedAt}
+			videoRecord := Video{video.Id, video.Snippet.Title, video.Snippet.ChannelId, publishedAt}
 			err = dbmap.Insert(&videoRecord)
 			if err != nil {
 				return err
@@ -195,6 +195,7 @@ func saveUploads(dbmap *gorp.DbMap, service *youtube.Service, channelId string) 
 // Video is the database model for videos
 type Video struct {
 	Id          string
+	Title       string
 	ChannelId   string
 	PublishedAt time.Time
 }
@@ -208,9 +209,16 @@ type Channel struct {
 	LastUpdated time.Time
 }
 
-// initDb opens the database and creates the videos table if necessary.
-func initDb() (*gorp.DbMap, error) {
-	db, err := sql.Open("sqlite3", os.ExpandEnv("../db.sqlite"))
+type Tracker struct {
+	Id           int64
+	Name         string
+	SeriesString string
+	ChannelId    string
+}
+
+// InitDb opens the database and creates the videos table if necessary.
+func InitDb() (*gorp.DbMap, error) {
+	db, err := sql.Open("sqlite3", os.ExpandEnv("/Users/SeanDuffy/.local/src/github.com/sean-duffy/subhub/db.sqlite"))
 	if err != nil {
 		return nil, err
 	}
@@ -218,6 +226,7 @@ func initDb() (*gorp.DbMap, error) {
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
 	dbmap.AddTableWithName(Video{}, "videos").SetKeys(false, "Id")
 	dbmap.AddTableWithName(Channel{}, "channels").SetKeys(false, "Id")
+	dbmap.AddTableWithName(Tracker{}, "trackers").SetKeys(true, "Id")
 
 	err = dbmap.CreateTablesIfNotExists()
 	if err != nil {
@@ -238,7 +247,7 @@ func GetData() {
 		log.Fatalf("Error creating YouTube client: %v", err)
 	}
 
-	dbmap, err := initDb()
+	dbmap, err := InitDb()
 	if err != nil {
 		log.Fatalf("Could not initialise database: %v", err)
 	}

@@ -35,7 +35,7 @@
     </div>
 
     <div class='container'>
-      <div class='row' id='controlRow' style="display: none;">
+      <div class='row' id='controlRow' style='display: none;'>
           <div class='btn-group' id='channelSelector'>
             <button type='button' class='btn dropdown-toggle btn-primary' data-toggle='dropdown'>
               All Channels <span class='caret'></span>
@@ -45,19 +45,53 @@
               <li class='divider'></li>
             </ul>
           </div>
-          <form class='form-inline' role='form' id='quickSearch'>
+          <form class='form-inline' role='form' id='channelSearch'>
             <div class='form-group'>
-              <input type='text' class='form-control typeahead' placeholder='Quick search'>
+              <input type='text' class='form-control typeahead' placeholder='Channel search'>
             </div>
           </form>
+          <div class='btn-group' id='seriesSelector'>
+            <button type='button' class='btn dropdown-toggle btn-success' data-toggle='dropdown'>
+              Series Trackers <span class='caret'></span>
+            </button>
+            <ul class='dropdown-menu' role='menu' id='trackerList'>
+              <li><a id='newSeriesTracker'><span class='glyphicon glyphicon-plus'></span> New Tracker</a></li>
+            </ul>
+          </div>
       </div>
 
       <div class='row'>
         <div class='thumbnails' id='videoContainer'>
             <div id='mainLoader'>
-                <img src="img/loader.gif">
+                <img src='img/loader.gif'>
                 <p>Loading, please wait.</p>
             </div>
+        </div>
+      </div>
+    </div>
+
+    <div class='modal fade' id='seriesTrackerModal' tabindex='-1' role='dialog' aria-labelledby='myModalLabel' aria-hidden='true'>
+      <div class='modal-dialog'>
+        <div class='modal-content'>
+          <div class='modal-header'>
+            <button type='button' class='close' data-dismiss='modal'><span aria-hidden='true'>&times;</span><span class='sr-only'>Close</span></button>
+            <h4 class='modal-title' id='myModalLabel'>New Series Tracker</h4>
+          </div>
+          <div class='modal-body'>
+            <p>Track a YouTube series by entering some text found in the title of all the videos.</p>
+            <div class='form-group'>
+              <label>Series Name</label>
+              <input type='text' class='form-control' id='trackerName' placeholder='Enter a name for this series'>
+            </div>
+            <div class='form-group'>
+              <label>Matching Text</label>
+              <input type='text' class='form-control' id='seriesString' placeholder='Enter the text to look for in the video title'>
+            </div>
+          </div>
+          <div class='modal-footer'>
+            <button type='button' class='btn btn-default' data-dismiss='modal'>Cancel</button>
+            <button type='button' class='btn btn-primary' id='createTracker'>Create Tracker</button>
+          </div>
         </div>
       </div>
     </div>
