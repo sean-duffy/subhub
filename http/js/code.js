@@ -1,7 +1,6 @@
 // Some variables to remember state.
 var currentChannelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
 var videoIdList = []
-var topTenList
 var editingTrackerId
 
 // This is run when authorisation is complete
@@ -268,8 +267,6 @@ function populateChannelSearch(subscriptionListItems) {
             channelId: item.snippet.resourceId.channelId
         })
     })
-
-    topTenList = channelDatums.slice(0, 10)
 
     $('.typeahead').typeahead({
         name: 'channels',
