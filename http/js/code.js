@@ -239,6 +239,11 @@ function formatDurationTime(duration) {
 
 // Load the uploads for the specified channel
 function loadUploads(channelId, channelName) {
+
+    if (channelId == undefined && channelName == undefined) {
+        channelName = 'All Channels '
+    }
+
     window.clearInterval(scrollInterval)
 
     $('#videoContainer').empty()
@@ -252,7 +257,13 @@ function loadUploads(channelId, channelName) {
     $('.typeahead').typeahead('setQuery', '')
 
     videoIdList = []
-    requestUploads(currentChannelId)
+
+    if (currentChannelId == undefined) {
+        requestUploads('all')
+    } else {
+        requestUploads(currentChannelId)
+    }
+
     scrollInterval = setInterval(infiniteScroll, 500)
 }
 
@@ -308,15 +319,7 @@ function populateChannelSearch(subscriptionListItems) {
     })
 
     $('.dropdown-menu #all-channels').click(function() {
-        var button = $('#channelSelector button')
-        button.empty()
-        button.append('All Channels ')
-        button.append($('<span class="caret"></span>'))
-        $('#videoContainer').empty()
-        videoIdList = []
-        currentChannelId = undefined
-        requestUploads('all')
-        scrollInterval = setInterval(infiniteScroll, 500)
+        loadUploads()
     })
 
     $('.dropdown-menu #all-channels').click()
