@@ -106,7 +106,6 @@ function populateSeriesTrackers() {
 
 // Send the API request to get uploads
 function requestUploads(channelId) {
-    populateSeriesTrackers()
     $.get("uploads/" + channelId, function(data) {
         uploads = JSON.parse(data)
         $.each(uploads, function(index, video) {
@@ -154,11 +153,6 @@ function createThumbnailRow(videoItems) {
     jQuery.each(videoItems, function(index, item) {
         var videoBox = createVideoBox(item)
         thumbnailRow.append(videoBox)
-    })
-
-    $('.videoBox small a').click(function(e) {
-        e.preventDefault()
-        loadUploads($(this).attr('href'), $(this).text())
     })
 
     $('#videoContainer').append(thumbnailRow)
@@ -250,6 +244,7 @@ function loadUploads(channelId, channelName) {
 
     $('#videoContainer').empty()
     currentChannelId = channelId
+    populateSeriesTrackers()
 
     var button = $('#channelSelector button')
     button.empty()
@@ -346,6 +341,13 @@ function nextPage() {
         }
         requestVideoContentDetails(videoIdString)
     }
+
+    $('.videoBox small a').unbind()
+    $('.videoBox small a').click(function(e) {
+        e.preventDefault()
+        loadUploads($(this).attr('href'), $(this).text())
+    })
+
 }
 
 // Load more videos when the user reaches the bottom of the page
