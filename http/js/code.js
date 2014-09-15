@@ -1,5 +1,5 @@
 // Some variables to remember state.
-var currentChannelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
+var currentChannelId, nextPageToken, scrollInterval, subscriptionListItems, subscriptionPageToken
 var videoIdList = []
 var editingTrackerId
 
