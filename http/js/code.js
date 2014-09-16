@@ -169,12 +169,14 @@ function createVideoBox(videoItem) {
 
     var imgLink = $('<a>')
     imgLink.attr('href', 'http://www.youtube.com/watch?v=' + id)
+    imgLink.attr('target', '_blank')
 
     var img = $('<img>')
     img.attr('src', videoSnippet.thumbnails.medium.url)
 
     var title = $('<a>')
     title.attr('href', 'http://www.youtube.com/watch?v=' + id)
+    title.attr('target', '_blank')
     title.text(videoSnippet.title)
 
     var channelTitle = $('<a>')
