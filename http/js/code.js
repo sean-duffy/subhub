@@ -168,7 +168,7 @@ function createVideoBox(videoItem) {
     li.addClass('col-md-3')
 
     var img = $('<img>')
-    $(img).attr('src', videoSnippet.thumbnails.medium.url)
+    img.attr('src', videoSnippet.thumbnails.medium.url)
 
     var title = $('<a>')
     title.attr('href', 'http://www.youtube.com/watch?v=' + id)
