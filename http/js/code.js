@@ -167,6 +167,9 @@ function createVideoBox(videoItem) {
     var li = $('<div>')
     li.addClass('col-md-3')
 
+    var imgLink = $('<a>')
+    imgLink.attr('href', 'http://www.youtube.com/watch?v=' + id)
+
     var img = $('<img>')
     img.attr('src', videoSnippet.thumbnails.medium.url)
 
@@ -196,7 +199,7 @@ function createVideoBox(videoItem) {
     var thumbnail = $('<div>')
     thumbnail.addClass('thumbnail')
     thumbnail.addClass('videoBox')
-    thumbnail.append(img)
+    thumbnail.append(imgLink.html(img))
     thumbnail.append(videoTime)
     thumbnail.append($('<p>').append($('<strong>').append(title)).append($('<p>').append(videoInfo)))
 
