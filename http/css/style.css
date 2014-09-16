@@ -100,3 +100,14 @@ a {
 .nameSpan {
     margin-right: 30px;
 }
+
+.thumbnail img {
+  display: block;
+  height: auto;
+  max-width: 100%;
+}
+
+.thumbnail img {
+  margin-right: auto;
+  margin-left: auto;
+}

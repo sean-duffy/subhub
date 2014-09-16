@@ -1,7 +1,6 @@
 // Some variables to remember state.
-var currentChannelId, playlistId, nextPageToken, currentToken, scrollInterval, subscriptionListItems, subscriptionPageToken
+var currentChannelId, nextPageToken, scrollInterval, subscriptionListItems, subscriptionPageToken
 var videoIdList = []
-var topTenList
 var editingTrackerId
 
 // This is run when authorisation is complete
@@ -106,7 +105,6 @@ function populateSeriesTrackers() {
 
 // Send the API request to get uploads
 function requestUploads(channelId) {
-    populateSeriesTrackers()
     $.get("uploads/" + channelId, function(data) {
         uploads = JSON.parse(data)
         $.each(uploads, function(index, video) {
@@ -169,16 +167,20 @@ function createVideoBox(videoItem) {
     var li = $('<div>')
     li.addClass('col-md-3')
 
+    var imgLink = $('<a>')
+    imgLink.attr('href', 'http://www.youtube.com/watch?v=' + id)
+    imgLink.attr('target', '_blank')
+
     var img = $('<img>')
-    $(img).attr('src', videoSnippet.thumbnails.medium.url)
+    img.attr('src', videoSnippet.thumbnails.medium.url)
 
     var title = $('<a>')
     title.attr('href', 'http://www.youtube.com/watch?v=' + id)
+    title.attr('target', '_blank')
     title.text(videoSnippet.title)
 
     var channelTitle = $('<a>')
-    // TODO: Replace # with channel URL
-    channelTitle.attr('href', '#')
+    channelTitle.attr('href', videoSnippet.channelId)
     channelTitle.text(videoSnippet.channelTitle)
     var titleSpan = $('<span>').html('by ')
     titleSpan.append(channelTitle)
@@ -199,7 +201,7 @@ function createVideoBox(videoItem) {
     var thumbnail = $('<div>')
     thumbnail.addClass('thumbnail')
     thumbnail.addClass('videoBox')
-    thumbnail.append(img)
+    thumbnail.append(imgLink.html(img))
     thumbnail.append(videoTime)
     thumbnail.append($('<p>').append($('<strong>').append(title)).append($('<p>').append(videoInfo)))
 
@@ -240,6 +242,36 @@ function formatDurationTime(duration) {
     return textDuration
 }
 
+// Load the uploads for the specified channel
+function loadUploads(channelId, channelName) {
+
+    if (channelId == undefined && channelName == undefined) {
+        channelName = 'All Channels '
+    }
+
+    window.clearInterval(scrollInterval)
+
+    $('#videoContainer').empty()
+    currentChannelId = channelId
+    populateSeriesTrackers()
+
+    var button = $('#channelSelector button')
+    button.empty()
+    button.append(channelName + ' ')
+    button.append($('<span class="caret"></span>'))
+    $('.typeahead').typeahead('setQuery', '')
+
+    videoIdList = []
+
+    if (currentChannelId == undefined) {
+        requestUploads('all')
+    } else {
+        requestUploads(currentChannelId)
+    }
+
+    scrollInterval = setInterval(infiniteScroll, 500)
+}
+
 // Populate the quick search box with channels
 function populateChannelSearch(subscriptionListItems) {
 
@@ -252,8 +284,6 @@ function populateChannelSearch(subscriptionListItems) {
         })
     })
 
-    topTenList = channelDatums.slice(0, 10)
-
     $('.typeahead').typeahead({
         name: 'channels',
         local: channelDatums,
@@ -262,22 +292,7 @@ function populateChannelSearch(subscriptionListItems) {
     })
 
     $(document).on('typeahead:selected', function(event, datum) {
-
-        window.clearInterval(scrollInterval)
-
-        $('#videoContainer').empty()
-        currentChannelId = datum.channelId
-
-        var channelName = datum.value
-        var button = $('#channelSelector button')
-        button.empty()
-        button.append(channelName + ' ')
-        button.append($('<span class="caret"></span>'))
-        $('.typeahead').typeahead('setQuery', '')
-
-        videoIdList = []
-        requestUploads(currentChannelId)
-        scrollInterval = setInterval(infiniteScroll, 500)
+        loadUploads(datum.channelId, datum.value)
     })
 
     $('#newSeriesTracker').click(function() {
@@ -309,15 +324,7 @@ function populateChannelSearch(subscriptionListItems) {
     })
 
     $('.dropdown-menu #all-channels').click(function() {
-        var button = $('#channelSelector button')
-        button.empty()
-        button.append('All Channels ')
-        button.append($('<span class="caret"></span>'))
-        $('#videoContainer').empty()
-        videoIdList = []
-        currentChannelId = undefined
-        requestUploads('all')
-        scrollInterval = setInterval(infiniteScroll, 500)
+        loadUploads()
     })
 
     $('.dropdown-menu #all-channels').click()
@@ -339,6 +346,13 @@ function nextPage() {
         }
         requestVideoContentDetails(videoIdString)
     }
+
+    $('.videoBox small a').unbind()
+    $('.videoBox small a').click(function(e) {
+        e.preventDefault()
+        loadUploads($(this).attr('href'), $(this).text())
+    })
+
 }
 
 // Load more videos when the user reaches the bottom of the page
