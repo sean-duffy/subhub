@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
+	q "github.com/lann/squirrel"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sean-duffy/subhub/core"
 	"github.com/stretchr/graceful"
@@ -48,15 +48,18 @@ func serveUploads(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "text/html")
 
-	query := "select * from videos %s order by PublishedAt desc"
+	query := q.Select("*").From("Videos").OrderBy("PublishedAt desc")
 
-	if channelId == "all" {
-		query = fmt.Sprintf(query, "")
-	} else {
-		query = fmt.Sprintf(query, "where ChannelId=?")
+	if channelId != "all" {
+		query = query.Where("ChannelId=?")
 	}
 
-	presentVideoQueryResults(w, query, channelId)
+	queryString, _, err := query.ToSql()
+	if err != nil {
+		http.Error(w, "500: Internal server error", http.StatusInternalServerError)
+	}
+
+	presentVideoQueryResults(w, queryString, channelId)
 }
 
 func addSeriesTracker(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +135,10 @@ func listSeriesTrackers(w http.ResponseWriter, r *http.Request) {
 	}
 	defer dbmap.Db.Close()
 
-	query := "select * from trackers where ChannelId=?"
+	query, _, err := q.Select("*").From("trackers").Where("ChannelId=?").ToSql()
+	if err != nil {
+		http.Error(w, "500: Internal server error", http.StatusInternalServerError)
+	}
 
 	trackers, err := dbmap.Select(core.Tracker{}, query, channelId)
 	if err != nil {
@@ -164,7 +170,10 @@ func serveSeries(w http.ResponseWriter, r *http.Request) {
 	}
 	defer dbmap.Db.Close()
 
-	query := "select * from trackers where Id=?"
+	query, _, err := q.Select("*").From("trackers").Where("Id=?").ToSql()
+	if err != nil {
+		http.Error(w, "500: Internal server error", http.StatusInternalServerError)
+	}
 
 	tracker := core.Tracker{}
 	err = dbmap.SelectOne(&tracker, query, trackerId)
@@ -174,7 +183,10 @@ func serveSeries(w http.ResponseWriter, r *http.Request) {
 
 	seriesString := "%" + tracker.SeriesString + "%"
 
-	query = "select * from videos where Title like ? and ChannelId=? order by PublishedAt desc"
+	query, _, err = q.Select("*").From("Videos").Where("Title like ? and ChannelId=?").OrderBy("PublishedAt desc").ToSql()
+	if err != nil {
+		http.Error(w, "500: Internal server error", http.StatusInternalServerError)
+	}
 
 	presentVideoQueryResults(w, query, seriesString, tracker.ChannelId)
 }
