@@ -170,6 +170,10 @@ function createVideoBox(videoItem) {
     var imgLink = $('<a>')
     imgLink.attr('href', 'http://www.youtube.com/watch?v=' + id)
     imgLink.attr('target', '_blank')
+    imgLink.click(function(e) {
+        showVideo(videoSnippet.title, id)
+        e.preventDefault()
+    })
 
     var img = $('<img>')
     img.attr('src', videoSnippet.thumbnails.medium.url)
@@ -274,7 +278,6 @@ function loadUploads(channelId, channelName) {
 
 // Populate the quick search box with channels
 function populateChannelSearch(subscriptionListItems) {
-
     var channelDatums = []
 
     jQuery.each(subscriptionListItems, function(index, item) {
@@ -321,6 +324,11 @@ function populateChannelSearch(subscriptionListItems) {
         $('#deleteTracker').remove()
         $('#createTracker').text('Create Tracker')
         editingTrackerId = undefined
+    })
+
+    $('#videoViewerModal').on('hidden.bs.modal', function() {
+        $('#videoViewerTitle').text('')
+        $('#videoViewerModal iframe').attr('src', '')
     })
 
     $('.dropdown-menu #all-channels').click(function() {
@@ -371,4 +379,10 @@ function infiniteScroll() {
     if (totalHeight <= currentScroll + visibleHeight + totalHeight * 0.1) {
         nextPage()
     }
+}
+
+function showVideo(title, id) {
+    $('#videoViewerTitle').text(title)
+    $('#videoViewerModal iframe').attr('src', 'https://www.youtube.com/embed/' + id + '?autoplay=1&vq=hd720')
+    $('#videoViewerModal').modal()
 }

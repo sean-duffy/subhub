@@ -111,3 +111,11 @@ a {
   margin-right: auto;
   margin-left: auto;
 }
+
+#videoViewerModal .modal-dialog {
+    width: 1162px;
+}
+
+#videoViewerModal iframe {
+    margin: 0 auto;
+}
