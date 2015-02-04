@@ -3,7 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -182,7 +185,12 @@ func serveSeries(w http.ResponseWriter, r *http.Request) {
 func main() {
 	mux := mux.NewRouter()
 
-	staticContent := http.FileServer(http.Dir("http"))
+	currentDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatalf("Error finding current directory: %v", err)
+	}
+
+	staticContent := http.FileServer(http.Dir(currentDir + "/http"))
 
 	mux.PathPrefix("/js/{_}").Handler(staticContent)
 	mux.PathPrefix("/css/{_}").Handler(staticContent)
