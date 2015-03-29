@@ -73,12 +73,11 @@ func openURL(url string) error {
 // readConfig reads the configuration from clientSecretsFile.
 // It returns an oauth configuration object for use with the Google API client.
 func readConfig(scope string) (*oauth.Config, error) {
+	pwd, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	// Read the secrets file
-	data, err := ioutil.ReadFile(*clientSecretsFile)
+	data, err := ioutil.ReadFile(filepath.Join(pwd, *clientSecretsFile))
 	if err != nil {
-		pwd, _ := os.Getwd()
-		fullPath := filepath.Join(pwd, *clientSecretsFile)
-		return nil, fmt.Errorf(missingClientSecretsMessage, fullPath)
+		return nil, fmt.Errorf(missingClientSecretsMessage, filepath.Join(pwd, *clientSecretsFile))
 	}
 
 	cfg := new(Config)
@@ -103,7 +102,7 @@ func readConfig(scope string) (*oauth.Config, error) {
 		AuthURL:      cfg.Installed.AuthURI,
 		TokenURL:     cfg.Installed.TokenURI,
 		RedirectURL:  redirectUri,
-		TokenCache:   oauth.CacheFile(*cacheFile),
+		TokenCache:   oauth.CacheFile(filepath.Join(pwd, *cacheFile)),
 		// Get a refresh token so we can use the access token indefinitely
 		AccessType: "offline",
 		// If we want a refresh token, we must set this attribute
