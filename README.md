@@ -1,4 +1,4 @@
-subhub
+SubHub
 ======
 
 A better way to browse your YouTube subscriptions. This is a JavaScript web app that allows you to easily browse, filter
@@ -8,6 +8,8 @@ an updated mirror of video metadata for a subset of channels in a structure more
 Right now this is a self-hosted prototype solution, with all the subscriptions being those of the user whose Google API client
 secrets have been provided. This of course will change at some point, with this being turned into a webapp for anyone to sign
 up to and use.
+
+![SubHub Screenshot](screenshot.png)
 
 Setup
 -----
