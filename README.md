@@ -6,8 +6,7 @@ and organise your YouTube subscription feed. It makes API calls to a Go backend 
 an updated mirror of video metadata for a subset of channels in a structure more suitable for keeping track of subscriptions.
 
 Right now this is a self-hosted prototype solution, with all the subscriptions being those of the user whose Google API client
-secrets have been provided. This of course will change at some point, with this being turned into a webapp for anyone to sign
-up to and use.
+secrets have been provided.
 
 ![SubHub Screenshot](screenshot.png)
 
