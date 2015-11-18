@@ -27,9 +27,3 @@ This will host the webapp at ```http://127.0.0.1:8000```. To update the database
 
 This should be put on a cronjob to be run with the desired frequency, currently I use every hour but
 this will certainly change in production.
-
-Contribution
-------------
-
-To contribute to this project, install it as shown above. We will be using CERN's [NoSY](http://root.cern.ch/drupal/content/suggested-work-flow-distributed-projects-nosy)
-git workflow. All work must be done on branches and the only merges will be pull requests from these branches to master.
